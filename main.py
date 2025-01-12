@@ -13,6 +13,8 @@ import webbrowser
 import base64
 from io import BytesIO
 from PIL import Image
+import datetime  # For dynamic footer year
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -88,7 +90,7 @@ class MainWindow(QMainWindow):
         try:
             img_data = base64.b64decode(img_str)
             image = Image.open(BytesIO(img_data))
-            image.thumbnail(max_size, Image.ANTIALIAS)
+            image.thumbnail(max_size, Image.Resampling.LANCZOS)  # PIL>=9.1 uses Resampling
             buffered = BytesIO()
             image.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue()).decode('utf-8')
@@ -122,7 +124,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Data Warning", "Some ratings could not be converted to numbers and are set as NaN.")
             
             # Resize Images
-            df['cover_image'] = df['cover_image'].apply(lambda x: self.resize_image(x))
+            if 'cover_image' in df.columns:
+                df['cover_image'] = df['cover_image'].apply(lambda x: self.resize_image(x))
             
             # Aggregate Points Per Album
             points_aggregated = df.groupby('album')['points'].sum().reset_index().rename(columns={'points': 'total_points'})
@@ -159,77 +162,157 @@ class MainWindow(QMainWindow):
             user_album_counts.columns = ['username', 'album_count']
             user_genre_counts = df.groupby('username')[['genre_1', 'genre_2']].agg(lambda x: x.value_counts().to_dict()).reset_index()
             
+            # Summary Statistics
+            total_albums = len(df_unique)
+            unique_artists = df_unique['artist'].nunique()
+            unique_genres = genre_counts['genre'].nunique()
+            countries = df_unique['country'].nunique()
+            unique_users = df_unique['username'].nunique()
+            
             # Visualizations
-            # 1. Album Ratings Bar Chart (Average Ratings)
-            fig_bar = px.bar(df_unique, x='album', y='avg_rating', color='artist', title='Album Ratings (Average)',
-                            labels={'avg_rating': 'Average Rating', 'album': 'Album'}, hover_data=['artist'])
+            # 1. Album Ratings Bar Chart
+            fig_bar = px.bar(
+                df_unique, 
+                x='album', 
+                y='avg_rating', 
+                color='artist', 
+                title='Album Ratings (Average)',
+                labels={'avg_rating': 'Average Rating', 'album': 'Album'}, 
+                hover_data=['artist']
+            )
+            fig_bar.update_layout(
+                xaxis_tickangle=-45,
+                hovermode="closest",
+                margin=dict(b=150)
+            )
             bar_graph = fig_bar.to_html(full_html=False, include_plotlyjs='cdn')
             
             # 2. Genre Distribution Pie Chart
-            fig_pie = px.pie(genre_counts, names='genre', values='count', title='Genre Distribution')
+            fig_pie = px.pie(
+                genre_counts, 
+                names='genre', 
+                values='count', 
+                title='Genre Distribution',
+                color_discrete_sequence=px.colors.sequential.RdBu
+            )
+            fig_pie.update_traces(textinfo='percent+label')
             pie_graph = fig_pie.to_html(full_html=False, include_plotlyjs=False)
             
-            # 3. Albums by Country Map (Improved)
-            # Aggregate data per country
+            # 3. Albums by Country Map (Choropleth)
             country_agg = df_unique.groupby('country').agg(
                 num_albums=pd.NamedAgg(column='album', aggfunc='count'),
                 avg_rating=pd.NamedAgg(column='avg_rating', aggfunc='mean')
             ).reset_index()
             
-            # Create scatter_geo with color representing average rating and size representing number of albums
-            fig_map = px.scatter_geo(country_agg,
-                                    locations="country",
-                                    locationmode='country names',
-                                    hover_name="country",
-                                    size="num_albums",
-                                    color="avg_rating",
-                                    color_continuous_scale='Viridis',
-                                    title="Albums by Country",
-                                    projection="natural earth",
-                                    template="plotly_white",
-                                    size_max=50,
-                                    labels={
-                                        'num_albums': 'Number of Albums',
-                                        'avg_rating': 'Average Rating'
-                                    })
-            # Enhance hover information
-            fig_map.update_traces(marker=dict(line=dict(width=0.5, color='DarkSlateGrey')),
-                                selector=dict(mode='markers'))
-            
+            fig_map = px.choropleth(
+                country_agg,
+                locations="country",
+                locationmode='country names',
+                color="avg_rating",
+                hover_name="country",
+                color_continuous_scale='Viridis',
+                title="Average Album Ratings by Country",
+                labels={'avg_rating': 'Average Rating'},
+                projection="natural earth"
+            )
+            fig_map.update_traces(
+                hovertemplate="<b>%{location}</b><br>Average Rating: %{z:.2f}<br>Number of Albums: %{customdata[0]}"
+            )
+            fig_map.update_layout(
+                coloraxis_colorbar=dict(
+                    title="Average Rating",
+                    tickvals=[country_agg['avg_rating'].min(), country_agg['avg_rating'].max()],
+                    ticktext=[f"{country_agg['avg_rating'].min():.2f}", f"{country_agg['avg_rating'].max():.2f}"]
+                )
+            )
+            fig_map.update_traces(customdata=country_agg[['num_albums']])
             map_graph = fig_map.to_html(full_html=False, include_plotlyjs=False)
             
             # 4. Average Rating per Artist Bar Chart
-            fig_avg = px.bar(artist_avg, x='artist', y='avg_rating', title='Average Rating per Artist',
-                            labels={'avg_rating': 'Average Rating', 'artist': 'Artist'},
-                            color='avg_rating', color_continuous_scale='Viridis')
+            fig_avg = px.bar(
+                artist_avg, 
+                x='artist', 
+                y='avg_rating', 
+                title='Average Rating per Artist',
+                labels={'avg_rating': 'Average Rating', 'artist': 'Artist'},
+                color='avg_rating', 
+                color_continuous_scale='Viridis'
+            )
+            fig_avg.update_layout(
+                xaxis_tickangle=-45,
+                hovermode="closest",
+                margin=dict(b=150)
+            )
             avg_graph = fig_avg.to_html(full_html=False, include_plotlyjs=False)
             
             # 5. Genre Counts Bar Chart
-            fig_genre = px.bar(genre_counts, x='genre', y='count', title='Genre Counts',
-                            labels={'count': 'Count', 'genre': 'Genre'},
-                            color='count', color_continuous_scale='Sunset')
+            fig_genre = px.bar(
+                genre_counts, 
+                x='genre', 
+                y='count', 
+                title='Genre Counts',
+                labels={'count': 'Count', 'genre': 'Genre'},
+                color='count', 
+                color_continuous_scale='Sunset'
+            )
+            fig_genre.update_layout(
+                xaxis_tickangle=-45,
+                hovermode="closest",
+                margin=dict(b=150)
+            )
             genre_graph = fig_genre.to_html(full_html=False, include_plotlyjs=False)
             
             # 6. Ratings Over Time Line Chart
-            fig_time = px.line(df_unique, x='release_date', y='avg_rating', color='artist', title='Average Ratings Over Time',
-                            labels={'release_date': 'Release Date', 'avg_rating': 'Average Rating'},
-                            markers=True)
+            fig_time = px.line(
+                df_unique, 
+                x='release_date', 
+                y='avg_rating', 
+                color='artist', 
+                title='Average Ratings Over Time',
+                labels={'release_date': 'Release Date', 'avg_rating': 'Average Rating'},
+                markers=True
+            )
+            fig_time.update_layout(
+                hovermode="x unified",
+                margin=dict(b=150)
+            )
             time_graph = fig_time.to_html(full_html=False, include_plotlyjs=False)
             
             # 7. User Average Ratings Bar Chart
-            fig_user_avg = px.bar(user_avg, x='username', y='user_avg_rating', title='Average Rating per User',
-                                labels={'user_avg_rating': 'Average Rating', 'username': 'User'},
-                                color='user_avg_rating', color_continuous_scale='Tealgrn')
+            fig_user_avg = px.bar(
+                user_avg, 
+                x='username', 
+                y='user_avg_rating', 
+                title='Average Rating per User',
+                labels={'user_avg_rating': 'Average Rating', 'username': 'User'},
+                color='user_avg_rating', 
+                color_continuous_scale='Tealgrn'
+            )
+            fig_user_avg.update_layout(
+                xaxis_tickangle=-45,
+                hovermode="closest",
+                margin=dict(b=150)
+            )
             user_avg_graph = fig_user_avg.to_html(full_html=False, include_plotlyjs=False)
             
             # 8. User Album Counts Bar Chart
-            fig_user_counts = px.bar(user_album_counts, x='username', y='album_count', title='Number of Albums per User',
-                                    labels={'album_count': 'Album Count', 'username': 'User'},
-                                    color='album_count', color_continuous_scale='Portland')
+            fig_user_counts = px.bar(
+                user_album_counts, 
+                x='username', 
+                y='album_count', 
+                title='Number of Albums per User',
+                labels={'album_count': 'Album Count', 'username': 'User'},
+                color='album_count', 
+                color_continuous_scale='Portland'
+            )
+            fig_user_counts.update_layout(
+                xaxis_tickangle=-45,
+                hovermode="closest",
+                margin=dict(b=150)
+            )
             user_counts_graph = fig_user_counts.to_html(full_html=False, include_plotlyjs=False)
             
             # 9. User Genre Distribution Heatmap
-            # Flatten genre counts per user
             user_genre_flat = []
             for index, row in user_genre_counts.iterrows():
                 user = row['username']
@@ -241,10 +324,18 @@ class MainWindow(QMainWindow):
             
             user_genre_df = pd.DataFrame(user_genre_flat)
             if not user_genre_df.empty:
-                fig_user_genre = px.density_heatmap(user_genre_df, x='username', y='genre', z='count',
-                                                title='Genre Distribution per User',
-                                                labels={'count': 'Count', 'username': 'User', 'genre': 'Genre'},
-                                                color_continuous_scale='Blues')
+                fig_user_genre = px.density_heatmap(
+                    user_genre_df, 
+                    x='username', 
+                    y='genre', 
+                    z='count',
+                    title='Genre Distribution per User',
+                    labels={'count': 'Count', 'username': 'User', 'genre': 'Genre'},
+                    color_continuous_scale='Blues'
+                )
+                fig_user_genre.update_layout(
+                    margin=dict(b=150)
+                )
                 user_genre_graph = fig_user_genre.to_html(full_html=False, include_plotlyjs=False)
             else:
                 user_genre_graph = "<p>No genre data available for users.</p>"
@@ -252,12 +343,8 @@ class MainWindow(QMainWindow):
             # Prepare Data for HTML (Albums Table)
             albums = df_unique.to_dict(orient='records')
             
-            # Summary Statistics
-            total_albums = len(df_unique)
-            unique_artists = df_unique['artist'].nunique()
-            unique_genres = genre_counts['genre'].nunique()
-            countries = df_unique['country'].nunique()
-            unique_users = df_unique['username'].nunique()
+            # Current Year for Footer
+            current_year = datetime.datetime.now().year
             
             # Setup Jinja2 Environment
             env = Environment(loader=FileSystemLoader('.'))
@@ -279,7 +366,8 @@ class MainWindow(QMainWindow):
                 unique_artists=unique_artists,
                 unique_genres=unique_genres,
                 countries=countries,
-                unique_users=unique_users
+                unique_users=unique_users,
+                current_year=current_year  # For dynamic footer year
             )
             
             # Save HTML Report
@@ -290,19 +378,17 @@ class MainWindow(QMainWindow):
             # Open the Report in Default Browser
             webbrowser.open(f'file://{output_path}')
             QMessageBox.information(self, "Success", "HTML report generated and opened in browser.")
-
+        
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to generate HTML:\n{e}")
+            QMessageBox.critical(self, "Error", f"Failed to generate HTML report:\n{e}")
 
-
-
-    
 def main():
     """Entry point for the application."""
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
