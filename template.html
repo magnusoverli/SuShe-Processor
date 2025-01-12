@@ -1,0 +1,226 @@
+<!-- template.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>📀 Album Report 📀</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Plotly JS -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- DataTables CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .header h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: #0d6efd;
+        }
+        .summary {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #0d6efd;
+        }
+        .summary p {
+            font-size: 1rem;
+            margin: 5px 0;
+        }
+        .graphs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .graph {
+            width: 45%;
+            min-width: 300px;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .graph h3 {
+            text-align: center;
+            color: #0d6efd;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+        }
+        th {
+            background-color: #0d6efd;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        img {
+            width: 80px;
+            height: auto;
+            border-radius: 4px;
+        }
+        @media (max-width: 768px) {
+            .graphs {
+                flex-direction: column;
+                align-items: center;
+            }
+            .graph {
+                width: 90%;
+            }
+            table, th, td {
+                font-size: 0.9rem;
+            }
+            img {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <h1>📀 Album Dashboard 📀</h1>
+    </div>
+    
+    <!-- Summary Section -->
+    <div class="summary">
+        <h2>📊 Summary 📊</h2>
+        <p><strong>Total Albums:</strong> {{ total_albums }}</p>
+        <p><strong>Unique Artists:</strong> {{ unique_artists }}</p>
+        <p><strong>Unique Genres:</strong> {{ unique_genres }}</p>
+        <p><strong>Countries Represented:</strong> {{ countries }}</p>
+        <p><strong>Unique Users:</strong> {{ unique_users }}</p>
+    </div>
+    
+    <!-- Graphs Section -->
+    <div class="graphs">
+        <div class="graph">
+            <h3>📈 Album Ratings (Average)</h3>
+            {{ bar_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>🥧 Genre Distribution</h3>
+            {{ pie_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>🌍 Albums by Country</h3>
+            {{ map_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>⭐ Average Rating per Artist</h3>
+            {{ avg_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>📚 Genre Counts</h3>
+            {{ genre_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>⏰ Average Ratings Over Time</h3>
+            {{ time_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>👤 Average Rating per User</h3>
+            {{ user_avg_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>📦 Number of Albums per User</h3>
+            {{ user_counts_graph | safe }}
+        </div>
+        <div class="graph">
+            <h3>🎨 Genre Distribution per User</h3>
+            {{ user_genre_graph | safe }}
+        </div>
+    </div>
+    
+    <!-- Albums Table -->
+    <h2>📄 Albums Table 📄</h2>
+    <table id="albumsTable" class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Artist</th>
+                <th>Album</th>
+                <th>Release Date</th>
+                <th>Country</th>
+                <th>Genre 1</th>
+                <th>Genre 2</th>
+                <th>Average Rating</th>
+                <th>Total Points</th>
+                <th>Cover</th>
+                <th>Contributors</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for album in albums %}
+            <tr>
+                <td>{{ album.artist }}</td>
+                <td>{{ album.album }}</td>
+                <td>{{ album.release_date.strftime('%d-%m-%Y') if album.release_date else 'N/A' }}</td>
+                <td>{{ album.country }}</td>
+                <td>{{ album.genre_1 }}</td>
+                <td>{{ album.genre_2 }}</td>
+                <td>{{ "{:.2f}".format(album.avg_rating) if album.avg_rating else 'N/A' }}</td>
+                <td>{{ album.total_points }}</td>
+                <td>
+                    {% if album.cover_image %}
+                        <img src="data:image/png;base64,{{ album.cover_image }}" alt="Cover">
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>{{ album.contributors }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Initialize DataTables -->
+    <script>
+        $(document).ready(function() {
+            $('#albumsTable').DataTable({
+                "paging": true,
+                "searching": true,
+                "ordering": true,
+                "order": [[ 7, "desc" ]],  // 7 corresponds to the 'Total Points' column (0-indexed)
+                "columnDefs": [
+                    { "orderable": false, "targets": [8, 9] }  // Disable sorting on Cover Image and Contributors
+                ],
+                "responsive": true
+            });
+        });
+    </script>
+</body>
+</html>
