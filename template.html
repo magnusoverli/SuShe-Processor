@@ -1,4 +1,3 @@
-<!-- template.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -298,7 +297,7 @@
             </div>
         </div>
         
-        <!-- Average Rating per User Bar Chart -->
+        <!-- User Average Ratings Bar Chart -->
         <div class="graph-card">
             <div class="card">
                 <div class="card-header">
@@ -310,7 +309,7 @@
             </div>
         </div>
         
-        <!-- Number of Albums per User Bar Chart -->
+        <!-- User Album Counts Bar Chart -->
         <div class="graph-card">
             <div class="card">
                 <div class="card-header">
@@ -322,7 +321,7 @@
             </div>
         </div>
         
-        <!-- Genre Distribution per User Heatmap -->
+        <!-- User Genre Distribution Heatmap -->
         <div class="graph-card">
             <div class="card">
                 <div class="card-header">
@@ -330,6 +329,54 @@
                 </div>
                 <div class="card-body">
                     {{ user_genre_graph | safe }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ratings Distribution Histogram -->
+        <div class="graph-card">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Ratings Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {{ rating_histogram | safe }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Correlation Matrix Heatmap -->
+        <div class="graph-card">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📈 Correlation Matrix</h5>
+                </div>
+                <div class="card-body">
+                    {{ correlation_heatmap | safe }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Genre Popularity Over Time Line Chart -->
+        <div class="graph-card">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📈 Genre Popularity Over Time</h5>
+                </div>
+                <div class="card-body">
+                    {{ genre_trend_graph | safe }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Artists Bar Chart -->
+        <div class="graph-card">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🏆 Top Artists by Total Points</h5>
+                </div>
+                <div class="card-body">
+                    {{ top_artists_graph | safe }}
                 </div>
             </div>
         </div>

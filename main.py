@@ -1,4 +1,3 @@
-# main.py
 import sys
 import os
 import json
@@ -20,7 +19,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Album Presentation App")
-        self.setGeometry(100, 100, 400, 250)
+        self.setGeometry(100, 100, 400, 300)
         
         self.data = None
         
@@ -340,6 +339,73 @@ class MainWindow(QMainWindow):
             else:
                 user_genre_graph = "<p>No genre data available for users.</p>"
             
+            # 10. Ratings Distribution Histogram
+            fig_rating_hist = px.histogram(
+                df_unique, 
+                x='avg_rating', 
+                nbins=20, 
+                title='Ratings Distribution',
+                labels={'avg_rating': 'Average Rating'},
+                color_discrete_sequence=['#0d6efd']
+            )
+            fig_rating_hist.update_layout(
+                hovermode="x",
+                margin=dict(b=100)
+            )
+            rating_histogram = fig_rating_hist.to_html(full_html=False, include_plotlyjs=False)
+            
+            # 11. Correlation Matrix Heatmap
+            corr = df_unique[['avg_rating', 'total_points']].corr()
+            fig_corr = px.imshow(
+                corr,
+                text_auto=True,
+                color_continuous_scale='RdBu',
+                title='Correlation Matrix'
+            )
+            fig_corr.update_layout(
+                margin=dict(t=100, l=100, r=100, b=100)
+            )
+            correlation_heatmap = fig_corr.to_html(full_html=False, include_plotlyjs=False)
+            
+            # 12. Genre Popularity Over Time Line Chart
+            genre_trend = df_unique.explode(['genre_1', 'genre_2'])
+            genre_trend = genre_trend.melt(id_vars=['year'], value_vars=['genre_1', 'genre_2'], var_name='Genre Type', value_name='Genre')
+            genre_trend = genre_trend.dropna(subset=['Genre'])
+            genre_trend_count = genre_trend.groupby(['year', 'Genre']).size().reset_index(name='count')
+            
+            fig_genre_trend = px.line(
+                genre_trend_count, 
+                x='year', 
+                y='count', 
+                color='Genre',
+                title='Genre Popularity Over Time',
+                labels={'year': 'Year', 'count': 'Number of Albums'},
+                markers=True
+            )
+            fig_genre_trend.update_layout(
+                hovermode="x unified",
+                margin=dict(b=150)
+            )
+            genre_trend_graph = fig_genre_trend.to_html(full_html=False, include_plotlyjs=False)
+            
+            # 13. Top Artists by Total Points Bar Chart
+            top_artists = df_unique.groupby('artist')['total_points'].sum().reset_index().sort_values(by='total_points', ascending=False).head(10)
+            fig_top_artists = px.bar(
+                top_artists, 
+                x='artist', 
+                y='total_points', 
+                title='🏆 Top Artists by Total Points',
+                labels={'total_points': 'Total Points', 'artist': 'Artist'},
+                color='total_points',
+                color_continuous_scale='YlGnBu'
+            )
+            fig_top_artists.update_layout(
+                xaxis_tickangle=-45,
+                hovermode="closest",
+                margin=dict(b=150)
+            )
+            top_artists_graph = fig_top_artists.to_html(full_html=False, include_plotlyjs=False)
+            
             # Prepare Data for HTML (Albums Table)
             albums = df_unique.to_dict(orient='records')
             
@@ -361,6 +427,10 @@ class MainWindow(QMainWindow):
                 user_avg_graph=user_avg_graph,
                 user_counts_graph=user_counts_graph,
                 user_genre_graph=user_genre_graph,
+                rating_histogram=rating_histogram,
+                correlation_heatmap=correlation_heatmap,
+                genre_trend_graph=genre_trend_graph,
+                top_artists_graph=top_artists_graph,
                 albums=albums,
                 total_albums=total_albums,
                 unique_artists=unique_artists,
