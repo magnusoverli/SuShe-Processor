@@ -1,0 +1,31 @@
+[
+    {
+        "standard": "Bård O",
+        "variations": ["bop", "bråd", "bård_", "bård o", "bård_o", "bårdo", "oppsanger"]
+    },
+    {
+        "standard": "Magnus",
+        "variations": ["magnus", "magnus_", "meo"]
+    },
+    {
+        "standard": "Jørgen",
+        "variations": ["jørgen", "jorgen", "jugga", "jugern"]
+    },
+    {
+        "standard": "Ronny",
+        "variations": ["ronny", "ragge", "ragga"]
+    },
+    {
+        "standard": "Cato",
+        "variations": ["cato", "ca2", "catta"]
+    },
+    {
+        "standard": "Espen",
+        "variations": ["espen", "epesen"]
+    },
+    {
+        "standard": "Bård G",
+        "variations": ["bårdg", "grov", "bård_g", "bård"]
+    }
+
+]

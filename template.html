@@ -22,23 +22,26 @@
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding-top: 70px; /* Space for fixed navbar */
-            background-color: #f0f2f5;
-            color: #333333;
+            background-color: #f8f9fa;
+            color: #343a40;
             scroll-behavior: smooth;
         }
         /* Navbar Styles */
         .navbar {
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: background-color 0.3s;
+            transition: background-color 0.5s, box-shadow 0.5s;
+        }
+        .navbar.scrolled {
+            background-color: #ffffff !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .navbar-brand {
-            font-weight: bold;
+            font-weight: 700;
             color: #0d6efd !important;
+            font-size: 1.5rem;
         }
         .nav-link {
-            color: #555555 !important;
-            margin-right: 15px;
+            color: #495057 !important;
+            margin-right: 20px;
             transition: color 0.3s;
         }
         .nav-link:hover {
@@ -46,19 +49,45 @@
         }
         /* Hero Section */
         .hero {
-            background: url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?&auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+            background: linear-gradient(rgba(13, 110, 253, 0.6), rgba(13, 110, 253, 0.6)), 
+                        url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?&auto=format&fit=crop&w=1350&q=80') 
+                        no-repeat center center;
             background-size: cover;
-            height: 300px;
+            height: 250px; /* Reduced fixed height */
+            /* Alternatively, use relative units:
+            height: 30vh;
+            */
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            transition: height 0.5s ease; /* Smooth transition on height change */
+        }
+        @media (max-width: 768px) {
+            .hero {
+                height: 200px; /* Further reduce height on smaller screens */
+            }
+        }
+        @media (max-width: 576px) {
+            .hero {
+                height: 180px; /* Even smaller height on very small screens */
+            }
         }
         .hero h1 {
-            font-size: 3rem;
+            font-size: 2.5rem; /* Reduced font size */
             animation: fadeInDown 1s ease-out;
+        }
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem; /* Further reduce font size on smaller screens */
+            }
+        }
+        @media (max-width: 576px) {
+            .hero h1 {
+                font-size: 1.8rem; /* Smaller font size */
+            }
         }
         @keyframes fadeInDown {
             from {
@@ -70,55 +99,138 @@
                 transform: translateY(0);
             }
         }
-        /* Summary Section */
-        .summary {
-            margin: 40px 0;
+        /* Section Frame Styling */
+        .section-frame {
+            background-color: rgba(255, 255, 255, 0.95); /* Slightly opaque white for modern look */
+            border: 1px solid #dee2e6; /* Light border */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
+            padding: 30px; /* Internal spacing */
+            margin-bottom: 60px; /* Space below each section */
+            transition: box-shadow 0.3s, transform 0.3s; /* Smooth hover effects */
         }
-        .summary .card {
+
+        .section-frame:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.147); /* Enhanced shadow on hover */
+        }
+
+        /* Optional: Section Titles Styling */
+        .section-frame h2 {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .section-frame h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: #0d6efd; /* Accent color matching Bootstrap primary */
+            margin-top: 5px;
+            border-radius: 2px;
+        }
+
+        /* Summary Section Enhancements */
+        .summary {
+            /* margin handled by .section-frame */
+        }
+
+        .summary-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
             transition: transform 0.3s, box-shadow 0.3s;
         }
-        .summary .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+
+        .summary-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
         }
+
+        .summary-item h5 {
+            font-size: 1.2rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .summary-item p.display-6 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0d6efd;
+            margin: 0;
+        }
+
         /* Graphs Section */
         .graphs {
-            margin-bottom: 50px;
+            /* margin handled by .section-frame */
         }
         .graph-card {
             margin-bottom: 30px;
         }
+        .graph-card .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .graph-card .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
         .graph-card .card-header {
-            cursor: pointer;
+            background-color: #0d6efd;
+            color: #ffffff;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .graph-card .card-body {
+            padding: 20px;
+        }
+        /* Grid Layout for Graphs */
+        .graphs .row {
+            row-gap: 30px;
         }
         /* Albums Table */
         .albums-section {
-            margin-bottom: 50px;
+            /* margin handled by .section-frame */
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: #ffffff;
-            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         th, td {
-            padding: 12px 15px;
+            padding: 15px 20px;
             text-align: center;
         }
         th {
             background-color: #0d6efd;
             color: #ffffff;
-            font-weight: bold;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: rgba(242, 242, 242, 0.8);
+        }
+        tr:hover {
+            background-color: rgba(233, 236, 239, 0.8);
         }
         img {
             width: 60px;
-            height: auto;
-            border-radius: 4px;
+            height: 60px; /* Fixed height for uniformity */
+            object-fit: cover; /* Maintain aspect ratio */
+            border-radius: 8px;
             transition: transform 0.3s;
         }
         img:hover {
@@ -127,28 +239,60 @@
         /* Footer */
         .footer {
             text-align: center;
-            padding: 20px;
-            background-color: #ffffff;
-            border-top: 1px solid #dee2e6;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
-            margin-top: 40px;
+            padding: 25px 0;
+            background-color: rgba(255, 255, 255, 0.95); /* Adjusted to match .section-frame */
+            border: 1px solid #dee2e6; /* Light border */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
+            transition: box-shadow 0.3s, transform 0.3s; /* Smooth hover effects */
+            margin: 60px auto; /* Centered and spaced */
+            max-width: 800px; /* Optional: Limit footer width */
         }
+
+        .footer:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+            transform: translateY(-2px); /* Slight lift on hover */
+        }
+
         /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .summary-item {
+                flex: 0 0 23%; /* Adjust width for medium screens */
+            }
+        }
+
         @media (max-width: 992px) {
-            .graph-card .card-header h5 {
-                font-size: 1.2rem;
+            .summary-item {
+                flex: 0 0 45%; /* Two items per row on smaller screens */
             }
+        }
+
+        @media (max-width: 576px) {
+            .summary-item {
+                flex: 0 0 100%; /* Stack items vertically on mobile */
+            }
+        }
+        @media (max-width: 992px) {
             .hero h1 {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
+            th, td {
+                padding: 12px 15px;
+            }
+        }
+        /* Define fixed width for Cover column */
+        #albumsTable th:nth-child(3),
+        #albumsTable td:nth-child(3) {
+            width: 100px; /* Adjust as needed */
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg fixed-top">
+    <nav class="navbar navbar-expand-lg fixed-top navbar-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#"><i class="fas fa-music"></i> Album Report</a>
+            <a class="navbar-brand" href="#"><i class="fas fa-music me-2"></i>Album Report</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -159,10 +303,10 @@
                         <a class="nav-link" href="#summary">Summary</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#graphs">Graphs</a>
+                        <a class="nav-link" href="#albums">Albums</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#albums">Albums Table</a>
+                        <a class="nav-link" href="#graphs">Graphs</a>
                     </li>
                 </ul>
             </div>
@@ -175,229 +319,68 @@
     </div>
     
     <!-- Summary Section -->
-    <div id="summary" class="container summary">
-        <h2 class="mb-4 text-center">📊 Summary 📊</h2>
-        <div class="row">
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card text-center h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-compact-disc"></i> Total Albums</h5>
-                        <p class="card-text display-6">{{ total_albums }}</p>
-                    </div>
+    <div id="summary" class="container summary mx-auto section-frame mt-4">
+        <h2 class="text-center">📊 Summary 📊</h2>
+        <div class="row justify-content-center align-items-stretch">
+            <!-- Summary Metric 1 -->
+            <div class="col-lg-2 col-md-3 col-sm-6 mb-4">
+                <div class="summary-item text-center h-100 d-flex flex-column">
+                    <i class="fas fa-compact-disc fa-3x text-primary mb-3"></i>
+                    <h5>Total Albums</h5>
+                    <p class="display-6 mt-auto">{{ total_albums }}</p>
                 </div>
             </div>
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card text-center h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-user-friends"></i> Unique Artists</h5>
-                        <p class="card-text display-6">{{ unique_artists }}</p>
-                    </div>
+            <!-- Summary Metric 2 -->
+            <div class="col-lg-2 col-md-3 col-sm-6 mb-4">
+                <div class="summary-item text-center h-100 d-flex flex-column">
+                    <i class="fas fa-user-friends fa-3x text-success mb-3"></i>
+                    <h5>Unique Artists</h5>
+                    <p class="display-6 mt-auto">{{ unique_artists }}</p>
                 </div>
             </div>
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card text-center h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-tags"></i> Unique Genres</h5>
-                        <p class="card-text display-6">{{ unique_genres }}</p>
-                    </div>
+            <!-- Summary Metric 3 -->
+            <div class="col-lg-2 col-md-3 col-sm-6 mb-4">
+                <div class="summary-item text-center h-100 d-flex flex-column">
+                    <i class="fas fa-tags fa-3x text-warning mb-3"></i>
+                    <h5>Unique Genres</h5>
+                    <p class="display-6 mt-auto">{{ unique_genres }}</p>
                 </div>
             </div>
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card text-center h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-globe"></i> Countries Represented</h5>
-                        <p class="card-text display-6">{{ countries }}</p>
-                    </div>
+            <!-- Summary Metric 4 -->
+            <div class="col-lg-2 col-md-3 col-sm-6 mb-4">
+                <div class="summary-item text-center h-100 d-flex flex-column">
+                    <i class="fas fa-globe fa-3x text-info mb-3"></i>
+                    <h5>Countries Represented</h5>
+                    <p class="display-6 mt-auto">{{ countries }}</p>
                 </div>
             </div>
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card text-center h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-users"></i> Unique Users</h5>
-                        <p class="card-text display-6">{{ unique_users }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Graphs Section -->
-    <div id="graphs" class="container graphs">
-        <h2 class="mb-4 text-center">📈 Graphs 📈</h2>
-        
-        <!-- Album Ratings Bar Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📊 Album Ratings (Average)</h5>
-                </div>
-                <div class="card-body">
-                    {{ bar_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Genre Distribution Pie Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">🥧 Genre Distribution</h5>
-                </div>
-                <div class="card-body">
-                    {{ pie_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Albums by Country Choropleth Map -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">🌍 Albums by Country</h5>
-                </div>
-                <div class="card-body">
-                    {{ map_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Average Rating per Artist Bar Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">⭐ Average Rating per Artist</h5>
-                </div>
-                <div class="card-body">
-                    {{ avg_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Genre Counts Bar Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📚 Genre Counts</h5>
-                </div>
-                <div class="card-body">
-                    {{ genre_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Ratings Over Time Line Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">⏰ Average Ratings Over Time</h5>
-                </div>
-                <div class="card-body">
-                    {{ time_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- User Average Ratings Bar Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">👤 Average Rating per User</h5>
-                </div>
-                <div class="card-body">
-                    {{ user_avg_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- User Album Counts Bar Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📦 Number of Albums per User</h5>
-                </div>
-                <div class="card-body">
-                    {{ user_counts_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- User Genre Distribution Heatmap -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">🎨 Genre Distribution per User</h5>
-                </div>
-                <div class="card-body">
-                    {{ user_genre_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Ratings Distribution Histogram -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📊 Ratings Distribution</h5>
-                </div>
-                <div class="card-body">
-                    {{ rating_histogram | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Correlation Matrix Heatmap -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📈 Correlation Matrix</h5>
-                </div>
-                <div class="card-body">
-                    {{ correlation_heatmap | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Genre Popularity Over Time Line Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📈 Genre Popularity Over Time</h5>
-                </div>
-                <div class="card-body">
-                    {{ genre_trend_graph | safe }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Top Artists Bar Chart -->
-        <div class="graph-card">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">🏆 Top Artists by Total Points</h5>
-                </div>
-                <div class="card-body">
-                    {{ top_artists_graph | safe }}
+            <!-- Summary Metric 5 -->
+            <div class="col-lg-2 col-md-3 col-sm-6 mb-4">
+                <div class="summary-item text-center h-100 d-flex flex-column">
+                    <i class="fas fa-users fa-3x text-danger mb-3"></i>
+                    <h5>Unique Users</h5>
+                    <p class="display-6 mt-auto">{{ unique_users }}</p>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- Albums Table Section -->
-    <div id="albums" class="container albums-section">
-        <h2 class="mb-4 text-center">📄 Albums Table 📄</h2>
+    <div id="albums" class="container albums-section section-frame">
+        <h2 class="text-center">📄 Albums Table 📄</h2>
         <div class="table-responsive">
-            <table id="albumsTable" class="table table-striped table-bordered">
+            <table id="albumsTable" class="table table-striped table-bordered" aria-label="Albums Table">
                 <thead class="table-primary">
                     <tr>
                         <th>Artist</th>
                         <th>Album</th>
+                        <th>Cover</th> <!-- Moved Cover here -->
                         <th>Release Date</th>
                         <th>Country</th>
                         <th>Genre 1</th>
                         <th>Genre 2</th>
                         <th>Average Rating</th>
                         <th>Total Points</th>
-                        <th>Cover</th>
                         <th>Contributors</th>
                     </tr>
                 </thead>
@@ -406,12 +389,6 @@
                     <tr>
                         <td>{{ album.artist }}</td>
                         <td>{{ album.album }}</td>
-                        <td>{{ album.release_date.strftime('%d-%m-%Y') if album.release_date else 'N/A' }}</td>
-                        <td>{{ album.country }}</td>
-                        <td>{{ album.genre_1 }}</td>
-                        <td>{{ album.genre_2 }}</td>
-                        <td>{{ "{:.2f}".format(album.avg_rating) if album.avg_rating else 'N/A' }}</td>
-                        <td>{{ album.total_points }}</td>
                         <td>
                             {% if album.cover_image %}
                                 <img src="data:image/png;base64,{{ album.cover_image }}" alt="Cover" loading="lazy">
@@ -419,6 +396,12 @@
                                 N/A
                             {% endif %}
                         </td>
+                        <td>{{ album.release_date.strftime('%d-%m-%Y') if album.release_date else 'N/A' }}</td>
+                        <td>{{ album.country }}</td>
+                        <td>{{ album.genre_1 }}</td>
+                        <td>{{ album.genre_2 }}</td>
+                        <td>{{ "{:.2f}".format(album.avg_rating) if album.avg_rating else 'N/A' }}</td>
+                        <td>{{ album.total_points }}</td>
                         <td>{{ album.contributors }}</td>
                     </tr>
                     {% endfor %}
@@ -427,8 +410,147 @@
         </div>
     </div>
     
+    <!-- Graphs Section -->
+    <div id="graphs" class="container graphs section-frame">
+        <h2 class="text-center">📈 Graphs 📈</h2>
+        <div class="row">
+            <!-- Graph 1: Album Ratings Bar Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        📊 Album Ratings (Average)
+                    </div>
+                    <div class="card-body">
+                        {{ bar_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 2: Genre Distribution Pie Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🥧 Genre Distribution
+                    </div>
+                    <div class="card-body">
+                        {{ pie_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 3: Albums by Country Choropleth Map -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🌍 Albums by Country
+                    </div>
+                    <div class="card-body">
+                        {{ map_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 4: Average Rating per Artist Bar Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        ⭐ Average Rating per Artist
+                    </div>
+                    <div class="card-body">
+                        {{ avg_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 5: Genre Counts Bar Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        📚 Genre Counts
+                    </div>
+                    <div class="card-body">
+                        {{ genre_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 6: Ratings Over Time Line Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        ⏰ Average Ratings Over Time
+                    </div>
+                    <div class="card-body">
+                        {{ time_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 7: User Average Ratings Bar Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        👤 Average Rating per User
+                    </div>
+                    <div class="card-body">
+                        {{ user_avg_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 8: User Album Counts Bar Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        📦 Number of Albums per User
+                    </div>
+                    <div class="card-body">
+                        {{ user_counts_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 9: User Genre Distribution Heatmap -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🎨 Genre Distribution per User
+                    </div>
+                    <div class="card-body">
+                        {{ user_genre_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 10: Ratings Distribution Histogram -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        📊 Ratings Distribution
+                    </div>
+                    <div class="card-body">
+                        {{ rating_histogram | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 11: Genre Popularity Over Months Line Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🎨 Genre Popularity Over Months
+                    </div>
+                    <div class="card-body">
+                        {{ genre_trend_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Graph 12: Top Artists Bar Chart -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🏆 Top Artists by Total Points
+                    </div>
+                    <div class="card-body">
+                        {{ top_artists_graph | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Footer -->
-    <div class="footer">
+    <div class="footer section-frame">
         <p>© {{ current_year }} Album Report. All rights reserved.</p>
     </div>
     
@@ -441,15 +563,28 @@
                 "paging": true,
                 "searching": true,
                 "ordering": true,
-                "order": [[ 7, "desc" ]],  // 7 corresponds to the 'Total Points' column (0-indexed)
+                "order": [[ 8, "desc" ]],  // 8 corresponds to the 'Total Points' column (0-indexed)
                 "columnDefs": [
-                    { "orderable": false, "targets": [8, 9] }  // Disable sorting on Cover Image and Contributors
+                    { "orderable": false, "targets": [2, 9] }  // Disable sorting on Cover and Contributors
                 ],
                 "responsive": true,
+                "pageLength": 100, // Set default page length to 100
+                "lengthMenu": [ [25, 50, 100, 200], [25, 50, 100, 200] ], // Define length menu options
                 "language": {
-                    "search": "Filter records:"
+                    "search": "Filter records:",
+                    "lengthMenu": "Show _MENU_ entries" // Optional: Customize the length menu label
                 }
             });
+        });
+
+        // Navbar background change on scroll
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
         });
     </script>
 </body>
