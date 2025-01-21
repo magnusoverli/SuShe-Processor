@@ -328,19 +328,49 @@ class MainWindow(QMainWindow):
                 labels={'avg_rating': 'Average Rating', 'album': 'Album'},
                 hover_data=['artist']
             )
-            fig_bar.update_layout(xaxis_tickangle=-45, hovermode="closest", margin=dict(b=150))
-            bar_graph = fig_bar.to_html(full_html=False, include_plotlyjs='cdn')
-
-            # 2. Genre Distribution Pie Chart
-            fig_pie = px.pie(
-                genre_counts,
-                names='genre',
-                values='count',
-                labels={'genre': 'Genre', 'count': 'Count'},
-                color_discrete_sequence=px.colors.sequential.RdBu
+            fig_bar.update_traces(
+                marker_line_width=0.5,  # Thinner bar outlines
+                marker_line_color="black"  # Outlines for better contrast
             )
-            fig_pie.update_traces(textinfo='percent+label')
-            pie_graph = fig_pie.to_html(full_html=False, include_plotlyjs=False)
+            fig_bar.update_layout(
+                margin=dict(t=0, l=0, r=0, b=100),  # Removes title padding and trims other margins
+                height=500,  # Consistent height
+                xaxis=dict(
+                    title=None,
+                    tickangle=-45,  # Keeps x-axis labels angled
+                    tickmode="linear"  # Ensures all labels are shown
+                ),
+                yaxis=dict(
+                    title="Average Rating",
+                    title_standoff=10  # Add some spacing between y-axis title and ticks
+                ),
+                showlegend=False,  # Removes the legend
+                title=None  # Removes the title inside the container
+            )
+            bar_graph = fig_bar.to_html(full_html=False, include_plotlyjs=False, default_height="500px", config={
+                "displayModeBar": False  # Disables the toolbar
+            })
+
+            # 2. Genre Distribution Treemap
+            fig_treemap = px.treemap(
+                genre_counts,
+                path=['genre'],
+                values='count',
+                labels={'genre': 'Genre', 'count': 'Count'}
+            )
+            fig_treemap.update_traces(
+                textinfo="label+value+percent entry",
+                hovertemplate="<b>Genre:</b> %{label}<br><b>Count:</b> %{value}<br><b>Percentage:</b> %{percentEntry:.2%}<extra></extra>",
+                tiling=dict(pad=0, squarifyratio=1)  # Optimizes spacing and squarification
+            )
+            fig_treemap.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Removes outer margins
+                height=500,  # Consistent height with other graphs
+                title=None  # Removes the title inside the graph container
+            )
+            treemap_graph = fig_treemap.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disables the toolbar
+            })
 
             # 3. Albums by Country Choropleth Map
             country_agg = df_unique.groupby('country').agg(
@@ -353,22 +383,29 @@ class MainWindow(QMainWindow):
                 locationmode='country names',
                 color="avg_rating",
                 hover_name="country",
-                color_continuous_scale='Viridis',
-                labels={'avg_rating': 'Average Rating'},
-                projection="natural earth"
+                projection="natural earth",
+                labels={'avg_rating': 'Average Rating'}
             )
             fig_map.update_traces(
-                hovertemplate="<b>%{location}</b><br>Avg Rating: %{z:.2f}<br>Albums: %{customdata[0]}"
+                customdata=country_agg[['num_albums']],  # Assign num_albums as customdata
+                hovertemplate="<b>%{location}</b><br>Avg Rating: %{z:.2f}<br>Albums: %{customdata[0]}<extra></extra>",
+                marker_line_width=0.8,
+                marker_line_color="white"
             )
             fig_map.update_layout(
-                coloraxis_colorbar=dict(
-                    title="Average Rating",
-                    tickvals=[country_agg['avg_rating'].min(), country_agg['avg_rating'].max()],
-                    ticktext=[f"{country_agg['avg_rating'].min():.2f}", f"{country_agg['avg_rating'].max():.2f}"]
+                margin=dict(t=0, l=0, r=0, b=0),  # Eliminates outer margins
+                height=500,  # Consistent height with other graphs
+                coloraxis_showscale=False,  # Hides the color bar
+                geo=dict(
+                    showframe=False,  # Removes map frame
+                    showcoastlines=True,  # Adds coastlines for better context
+                    coastlinecolor="LightGrey",  # Light grey coastlines
+                    projection_scale=0.95,  # Adjust zoom (lower value zooms out)
                 )
             )
-            fig_map.update_traces(customdata=country_agg[['num_albums']])
-            map_graph = fig_map.to_html(full_html=False, include_plotlyjs=False)
+            map_graph = fig_map.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disables the toolbar
+            })
 
             # 4. Average Rating per Artist Bar Chart
             fig_avg = px.bar(
@@ -379,8 +416,28 @@ class MainWindow(QMainWindow):
                 color='avg_rating',
                 color_continuous_scale='Viridis'
             )
-            fig_avg.update_layout(xaxis_tickangle=-45, hovermode="closest", margin=dict(b=150))
-            avg_graph = fig_avg.to_html(full_html=False, include_plotlyjs=False)
+            fig_avg.update_traces(
+                marker_line_width=0.5,  # Add thin bar outlines for clarity
+                marker_line_color="black"  # Define outline color
+            )
+            fig_avg.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                height=500,  # Set consistent height with the world map graph
+                xaxis=dict(
+                    tickangle=-45,  # Angle x-axis labels for readability
+                    tickmode="linear",  # Ensure all artist names are displayed
+                    title=None  # Remove the x-axis title ("Artist")
+                ),
+                yaxis=dict(
+                    title="Average Rating",
+                    title_standoff=10  # Space between y-axis title and ticks
+                ),
+                showlegend=False,  # Remove the legend
+                coloraxis_showscale=False  # Remove the color scale
+            )
+            avg_graph = fig_avg.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 5. Genre Counts Bar Chart
             fig_genre = px.bar(
@@ -391,20 +448,56 @@ class MainWindow(QMainWindow):
                 color='count',
                 color_continuous_scale='Sunset'
             )
-            fig_genre.update_layout(xaxis_tickangle=-45, hovermode="closest", margin=dict(b=150))
-            genre_graph = fig_genre.to_html(full_html=False, include_plotlyjs=False)
+            fig_genre.update_traces(
+                marker_line_width=0.5,  # Add thin bar outlines for clarity
+                marker_line_color="black"  # Define outline color
+            )
+            fig_genre.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                height=500,  # Set consistent height with other graphs
+                xaxis=dict(
+                    tickangle=-45,  # Angle x-axis labels for readability
+                    tickmode="linear",  # Ensure all labels are displayed
+                    title=None  # Remove the x-axis title ("Genre")
+                ),
+                yaxis=dict(
+                    title="Count",
+                    title_standoff=10  # Add some spacing between y-axis title and ticks
+                ),
+                showlegend=False,  # Remove the legend
+                coloraxis_showscale=False  # Remove the color scale
+            )
+            genre_graph = fig_genre.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 6. Ratings Over Time Line Chart
-            fig_time = px.line(
+            fig_time = px.scatter(
                 df_unique,
                 x='release_date',
                 y='avg_rating',
                 color='artist',
                 labels={'release_date': 'Release Date', 'avg_rating': 'Average Rating'},
-                markers=True
+                title=None,
+                height=500  # Set consistent height with other graphs
             )
-            fig_time.update_layout(hovermode="x unified", margin=dict(b=150))
-            time_graph = fig_time.to_html(full_html=False, include_plotlyjs=False)
+            fig_time.update_traces(
+                marker=dict(size=8, line=dict(width=0.5, color='black'))  # Improve point visibility
+            )
+            fig_time.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                xaxis=dict(
+                    title=None  # Remove x-axis title ("Release Date")
+                ),
+                yaxis=dict(
+                    title="Average Rating",
+                    title_standoff=10  # Add spacing between y-axis title and ticks
+                ),
+                showlegend=False  # Remove the legend
+            )
+            time_graph = fig_time.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 7. User Average Ratings Bar Chart
             user_avg = df.groupby('username')['rating'].mean().reset_index(name='user_avg_rating')
@@ -416,8 +509,28 @@ class MainWindow(QMainWindow):
                 color='user_avg_rating',
                 color_continuous_scale='Tealgrn'
             )
-            fig_user_avg.update_layout(xaxis_tickangle=-45, hovermode="closest", margin=dict(b=150))
-            user_avg_graph = fig_user_avg.to_html(full_html=False, include_plotlyjs=False)
+            fig_user_avg.update_traces(
+                marker_line_width=0.5,  # Add thin bar outlines for clarity
+                marker_line_color="black"  # Define outline color
+            )
+            fig_user_avg.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                height=500,  # Set consistent height with other graphs
+                xaxis=dict(
+                    tickangle=-45,  # Angle x-axis labels for readability
+                    tickmode="linear",  # Ensure all labels are displayed
+                    title=None  # Remove the x-axis title ("User")
+                ),
+                yaxis=dict(
+                    title="Average Rating",
+                    title_standoff=10  # Add some spacing between y-axis title and ticks
+                ),
+                showlegend=False,  # Remove the legend
+                coloraxis_showscale=False  # Remove the color scale
+            )
+            user_avg_graph = fig_user_avg.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 8. User Album Counts Bar Chart
             user_album_counts = df.groupby('username')['album'].nunique().reset_index(name='album_count')
@@ -429,8 +542,28 @@ class MainWindow(QMainWindow):
                 color='album_count',
                 color_continuous_scale='Portland'
             )
-            fig_user_counts.update_layout(xaxis_tickangle=-45, hovermode="closest", margin=dict(b=150))
-            user_counts_graph = fig_user_counts.to_html(full_html=False, include_plotlyjs=False)
+            fig_user_counts.update_traces(
+                marker_line_width=0.5,  # Add thin bar outlines for clarity
+                marker_line_color="black"  # Define outline color
+            )
+            fig_user_counts.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                height=500,  # Set consistent height with other graphs
+                xaxis=dict(
+                    tickangle=-45,  # Angle x-axis labels for readability
+                    tickmode="linear",  # Ensure all labels are displayed
+                    title=None  # Remove the x-axis title ("User")
+                ),
+                yaxis=dict(
+                    title="Album Count",
+                    title_standoff=10  # Add some spacing between y-axis title and ticks
+                ),
+                showlegend=False,  # Remove the legend
+                coloraxis_showscale=False  # Remove the color scale
+            )
+            user_counts_graph = fig_user_counts.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 9. User Genre Distribution Interactive Dot Plot
             # [Updated Code Below]
@@ -475,45 +608,38 @@ class MainWindow(QMainWindow):
                 color_map = {genre: colors[i] for i, genre in enumerate(genre_order)}
                 
                 # Create Interactive Dot Plot
-                fig_user_genre = px.scatter(
-                    user_genre_counts,
-                    x='username',
-                    y='genre',
-                    size='count',
-                    color='genre',
-                    color_discrete_map=color_map,
-                    labels={
-                        'username': 'User',
-                        'genre': 'Genre',
-                        'count': 'Number of Albums'
-                    },
-                    title='Genre Distribution per User',
-                    hover_data={'count': True, 'percentage': ':.2f'},
-                    height=600
-                )
-                
-                # Update hover template to show percentage
-                fig_user_genre.update_traces(
-                    hovertemplate='<b>User:</b> %{x}<br><b>Genre:</b> %{y}<br><b>Albums:</b> %{marker.size}<br><b>Percentage:</b> %{customdata[1]:.2f}%<extra></extra>'
-                )
-                
-                # Update layout for better readability
-                fig_user_genre.update_layout(
-                    margin=dict(t=50, l=100, r=100, b=100),
-                    xaxis_title="User",
-                    yaxis_title="Genre",
-                    legend_title="Genre",
-                    hovermode="closest"
-                )
-                
-                # Enable gridlines for easier reading
-                fig_user_genre.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
-                fig_user_genre.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
-                
-                # Generate HTML for the chart
-                user_genre_graph = fig_user_genre.to_html(full_html=False, include_plotlyjs=False)
-            else:
-                user_genre_graph = "<p>No genre data available for users.</p>"
+            fig_user_genre = px.scatter(
+                user_genre_counts,
+                x='username',
+                y='genre',
+                size='count',
+                color='genre',
+                labels={
+                    'username': 'User',
+                    'genre': 'Genre',
+                    'count': 'Number of Albums'
+                },
+                title=None,
+                height=500  # Set consistent height with other graphs
+            )
+            fig_user_genre.update_traces(
+                hovertemplate='<b>User:</b> %{x}<br><b>Genre:</b> %{y}<br><b>Albums:</b> %{marker.size}<extra></extra>',
+                marker=dict(opacity=0.7, line=dict(width=0.5, color='black'))  # Slight border for clarity
+            )
+            fig_user_genre.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                xaxis=dict(
+                    tickangle=-45,  # Angle x-axis labels
+                    title=None  # Remove x-axis title
+                ),
+                yaxis=dict(
+                    title=None  # Remove y-axis title
+                ),
+                showlegend=False  # Remove the legend
+            )
+            user_genre_graph = fig_user_genre.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 10. Ratings Distribution Histogram
             fig_rating_hist = px.histogram(
@@ -523,8 +649,24 @@ class MainWindow(QMainWindow):
                 labels={'avg_rating': 'Average Rating'},
                 color_discrete_sequence=['#0d6efd']
             )
-            fig_rating_hist.update_layout(hovermode="x", margin=dict(b=100))
-            rating_histogram = fig_rating_hist.to_html(full_html=False, include_plotlyjs=False)
+            fig_rating_hist.update_traces(
+                opacity=0.8  # Slight transparency for better visibility
+            )
+            fig_rating_hist.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                height=500,  # Set consistent height with other graphs
+                xaxis=dict(
+                    title=None  # Remove x-axis title
+                ),
+                yaxis=dict(
+                    title="Count",
+                    title_standoff=10  # Add spacing between y-axis title and ticks
+                ),
+                showlegend=False  # Remove the legend
+            )
+            rating_histogram = fig_rating_hist.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 11. Genre Popularity Over Time Line Chart (Now by Month)
             genre_trend = df_unique.explode(['genre_1', 'genre_2'])
@@ -538,27 +680,40 @@ class MainWindow(QMainWindow):
             genre_trend_count['month_name'] = pd.to_datetime(genre_trend_count['month'], format='%m').dt.strftime('%B')
             genre_trend_count = genre_trend_count.sort_values('month')
 
-            fig_genre_trend = px.line(
+            fig_genre_trend = px.scatter(
                 genre_trend_count,
                 x='month_name',
                 y='count',
                 color='genre',
                 labels={'month_name': 'Month', 'count': 'Number of Albums'},
-                markers=True
+                title=None,
+                height=500  # Set consistent height with other graphs
+            )
+            fig_genre_trend.update_traces(
+                marker=dict(size=8, line=dict(width=0.5, color='black')),  # Improve marker visibility
+                mode='markers'  # Use markers only, no lines
             )
             fig_genre_trend.update_layout(
-                hovermode="x unified",
-                margin=dict(b=150),
-                xaxis_title='Month',
-                yaxis_title='Number of Albums',
-                legend_title='Genre'
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                xaxis=dict(
+                    tickangle=-45,  # Rotate x-axis labels
+                    title=None  # Remove x-axis title
+                ),
+                yaxis=dict(
+                    title="Number of Albums",
+                    title_standoff=10  # Add spacing between y-axis title and ticks
+                ),
+                showlegend=False  # Remove the legend
             )
-            genre_trend_graph = fig_genre_trend.to_html(full_html=False, include_plotlyjs=False)
+            genre_trend_graph = fig_genre_trend.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 12. Top Artists Bar Chart
             top_artists = df_unique.groupby('artist')['total_points'].sum().reset_index().sort_values(
                 by='total_points', ascending=False
             ).head(10)
+
             fig_top_artists = px.bar(
                 top_artists,
                 x='artist',
@@ -567,8 +722,27 @@ class MainWindow(QMainWindow):
                 color='total_points',
                 color_continuous_scale='YlGnBu'
             )
-            fig_top_artists.update_layout(xaxis_tickangle=-45, hovermode="closest", margin=dict(b=150))
-            top_artists_graph = fig_top_artists.to_html(full_html=False, include_plotlyjs=False)
+            fig_top_artists.update_traces(
+                marker_line_width=0.5,  # Add thin bar outlines for clarity
+                marker_line_color="black"  # Define outline color
+            )
+            fig_top_artists.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),  # Remove unnecessary margins
+                height=500,  # Set consistent height with other graphs
+                xaxis=dict(
+                    tickangle=-45,  # Angle x-axis labels for readability
+                    title=None  # Remove x-axis title
+                ),
+                yaxis=dict(
+                    title="Total Points",
+                    title_standoff=10  # Add spacing between y-axis title and ticks
+                ),
+                showlegend=False,  # Remove the legend
+                coloraxis_showscale=False  # Remove the color scale
+            )
+            top_artists_graph = fig_top_artists.to_html(full_html=False, include_plotlyjs=False, config={
+                "displayModeBar": False  # Disable the toolbar
+            })
 
             # 9. User Genre Distribution Interactive Dot Plot
             # [Already Implemented Above]
@@ -588,7 +762,7 @@ class MainWindow(QMainWindow):
 
             html_content = template.render(
                 bar_graph=bar_graph,
-                pie_graph=pie_graph,
+                treemap_graph=treemap_graph,
                 map_graph=map_graph,
                 avg_graph=avg_graph,
                 genre_graph=genre_graph,
