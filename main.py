@@ -15,7 +15,7 @@ import webbrowser
 import base64
 from io import BytesIO
 from PIL import Image
-import datetime
+from pathlib import Path
 
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller."""
@@ -608,8 +608,9 @@ class MainWindow(QMainWindow):
                 current_year=current_year  # For dynamic footer year
             )
 
-            # Save HTML Report
-            output_path = os.path.join(os.getcwd(), "album_report.html")
+            # Save HTML Report to Desktop
+            desktop_path = Path.home() / "Desktop"
+            output_path = desktop_path / "album_report.html"
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
 
