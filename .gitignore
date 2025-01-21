@@ -172,6 +172,4 @@ cython_debug/
 
 # The exported report
 .html
-installer/AlbumPresentationApp Installer v1.0.0.exe
-installer/SuSheProcessor Installer v1.0.1.exe
-installer/SuSheProcessor Installer v1.0.2.exe
+installer/
