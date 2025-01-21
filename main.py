@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-import re  # Import for regex
+import sys
 import pandas as pd
 import plotly.express as px
 import plotly.colors as pc
@@ -17,6 +17,15 @@ from io import BytesIO
 from PIL import Image
 import datetime
 
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    try:
+        # PyInstaller creates a temporary folder and stores its path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -70,7 +79,8 @@ class MainWindow(QMainWindow):
         Each mapping contains a standardized username and its possible variations.
         """
         try:
-            with open(mapping_file, 'r', encoding='utf-8') as f:
+            mapping_path = resource_path(mapping_file)  # Use resource_path
+            with open(mapping_path, 'r', encoding='utf-8') as f:
                 mappings = json.load(f)
             # Create a dictionary for quick lookup
             for entry in mappings:
@@ -80,11 +90,11 @@ class MainWindow(QMainWindow):
                     self.username_map[variation.lower()] = standard
         except FileNotFoundError:
             QMessageBox.critical(self, "Mapping File Not Found",
-                                 f"The mapping file '{mapping_file}' was not found.")
+                                f"The mapping file '{mapping_file}' was not found.")
             self.username_map = {}
         except json.JSONDecodeError as e:
             QMessageBox.critical(self, "Invalid Mapping File",
-                                 f"Failed to parse '{mapping_file}':\n{e}")
+                                f"Failed to parse '{mapping_file}':\n{e}")
             self.username_map = {}
 
     def load_json(self):
@@ -567,10 +577,11 @@ class MainWindow(QMainWindow):
             albums = df_unique.to_dict(orient='records')
             # current_year already set to report_year
 
-            # Jinja2 template
             env = Environment(loader=FileSystemLoader('.'))
             try:
-                template = env.get_template('template.html')
+                template_path = resource_path('template.html')  # Use resource_path
+                env = Environment(loader=FileSystemLoader(os.path.dirname(template_path)))
+                template = env.get_template(os.path.basename(template_path))
             except Exception as e:
                 QMessageBox.critical(self, "Template Error", f"Failed to load 'template.html':\n{e}")
                 return
