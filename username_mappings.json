@@ -1,6 +1,6 @@
 [
     {
-        "standard": "Bård O",
+        "standard": "BOP",
         "variations": ["bop", "bråd", "bård_", "bård o", "bård_o", "bårdo", "oppsanger"]
     },
     {
@@ -24,8 +24,12 @@
         "variations": ["espen", "epesen"]
     },
     {
-        "standard": "Bård G",
+        "standard": "Grov",
         "variations": ["bårdg", "grov", "bård_g", "bård"]
+    },
+    {
+        "standard": "Odd",
+        "variations": ["oddy", "oddly", "odd h", "odd_h"]
     }
 
 ]
