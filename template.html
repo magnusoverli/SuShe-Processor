@@ -14,14 +14,14 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Styles -->
     <style>
         body {
             font-family: 'Roboto', sans-serif;
             margin: 0;
-            padding-top: 70px; /* Space for fixed navbar */
+            padding-top: 70px; 
             background-color: #f8f9fa;
             color: #343a40;
             scroll-behavior: smooth;
@@ -47,46 +47,42 @@
         .nav-link:hover {
             color: #0d6efd !important;
         }
-        /* Hero Section */
+        /* Hero */
         .hero {
             background: linear-gradient(rgba(13, 110, 253, 0.6), rgba(13, 110, 253, 0.6)), 
                         url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?&auto=format&fit=crop&w=1350&q=80') 
                         no-repeat center center;
             background-size: cover;
-            height: 250px; /* Reduced fixed height */
-            /* Alternatively, use relative units:
-            height: 30vh;
-            */
-            position: relative;
+            height: 250px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
-            transition: height 0.5s ease; /* Smooth transition on height change */
+            transition: height 0.5s ease;
         }
         @media (max-width: 768px) {
             .hero {
-                height: 200px; /* Further reduce height on smaller screens */
+                height: 200px;
             }
         }
         @media (max-width: 576px) {
             .hero {
-                height: 180px; /* Even smaller height on very small screens */
+                height: 180px;
             }
         }
         .hero h1 {
-            font-size: 2.5rem; /* Reduced font size */
+            font-size: 2.5rem;
             animation: fadeInDown 1s ease-out;
         }
         @media (max-width: 768px) {
             .hero h1 {
-                font-size: 2rem; /* Further reduce font size on smaller screens */
+                font-size: 2rem;
             }
         }
         @media (max-width: 576px) {
             .hero h1 {
-                font-size: 1.8rem; /* Smaller font size */
+                font-size: 1.8rem;
             }
         }
         @keyframes fadeInDown {
@@ -99,44 +95,35 @@
                 transform: translateY(0);
             }
         }
-        /* Section Frame Styling */
+        /* Section Frames */
         .section-frame {
-            background-color: rgba(255, 255, 255, 0.95); /* Slightly opaque white for modern look */
-            border: 1px solid #dee2e6; /* Light border */
-            border-radius: 15px; /* Rounded corners */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
-            padding: 30px; /* Internal spacing */
-            margin-bottom: 60px; /* Space below each section */
-            transition: box-shadow 0.3s, transform 0.3s; /* Smooth hover effects */
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid #dee2e6;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            margin-bottom: 60px;
+            transition: box-shadow 0.3s, transform 0.3s;
         }
-
         .section-frame:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.147); /* Enhanced shadow on hover */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.147);
         }
-
-        /* Optional: Section Titles Styling */
         .section-frame h2 {
             position: relative;
             display: inline-block;
             padding-bottom: 10px;
             margin-bottom: 30px;
         }
-
         .section-frame h2::after {
             content: '';
             display: block;
             width: 50px;
             height: 3px;
-            background-color: #0d6efd; /* Accent color matching Bootstrap primary */
+            background-color: #0d6efd;
             margin-top: 5px;
             border-radius: 2px;
         }
-
-        /* Summary Section Enhancements */
-        .summary {
-            /* margin handled by .section-frame */
-        }
-
+        /* Summary */
         .summary-item {
             background: rgba(255, 255, 255, 0.9);
             padding: 20px;
@@ -144,29 +131,22 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
             transition: transform 0.3s, box-shadow 0.3s;
         }
-
         .summary-item:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 16px rgba(0,0,0,0.15);
         }
-
         .summary-item h5 {
             font-size: 1.2rem;
             color: #6c757d;
             margin-bottom: 10px;
         }
-
         .summary-item p.display-6 {
             font-size: 2.5rem;
             font-weight: 700;
             color: #0d6efd;
             margin: 0;
         }
-
-        /* Graphs Section */
-        .graphs {
-            /* margin handled by .section-frame */
-        }
+        /* Graphs */
         .graph-card {
             margin-bottom: 30px;
         }
@@ -192,14 +172,10 @@
         .graph-card .card-body {
             padding: 20px;
         }
-        /* Grid Layout for Graphs */
         .graphs .row {
             row-gap: 30px;
         }
         /* Albums Table */
-        .albums-section {
-            /* margin handled by .section-frame */
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -228,8 +204,8 @@
         }
         img {
             width: 60px;
-            height: 60px; /* Fixed height for uniformity */
-            object-fit: cover; /* Maintain aspect ratio */
+            height: 60px;
+            object-fit: cover;
             border-radius: 8px;
             transition: transform 0.3s;
         }
@@ -240,36 +216,32 @@
         .footer {
             text-align: center;
             padding: 25px 0;
-            background-color: rgba(255, 255, 255, 0.95); /* Adjusted to match .section-frame */
-            border: 1px solid #dee2e6; /* Light border */
-            border-radius: 15px; /* Rounded corners */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
-            transition: box-shadow 0.3s, transform 0.3s; /* Smooth hover effects */
-            margin: 60px auto; /* Centered and spaced */
-            max-width: 800px; /* Optional: Limit footer width */
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid #dee2e6;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s, transform 0.3s;
+            margin: 60px auto;
+            max-width: 800px;
         }
-
         .footer:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
-            transform: translateY(-2px); /* Slight lift on hover */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
-
         /* Responsive Adjustments */
         @media (max-width: 1200px) {
             .summary-item {
-                flex: 0 0 23%; /* Adjust width for medium screens */
+                flex: 0 0 23%;
             }
         }
-
         @media (max-width: 992px) {
             .summary-item {
-                flex: 0 0 45%; /* Two items per row on smaller screens */
+                flex: 0 0 45%;
             }
         }
-
         @media (max-width: 576px) {
             .summary-item {
-                flex: 0 0 100%; /* Stack items vertically on mobile */
+                flex: 0 0 100%;
             }
         }
         @media (max-width: 992px) {
@@ -280,10 +252,9 @@
                 padding: 12px 15px;
             }
         }
-        /* Define fixed width for Cover column */
-        #albumsTable th:nth-child(3),
-        #albumsTable td:nth-child(3) {
-            width: 100px; /* Adjust as needed */
+        #albumsTable th:nth-child(4),
+        #albumsTable td:nth-child(4) {
+            width: 100px; 
             text-align: center;
         }
     </style>
@@ -372,14 +343,14 @@
             <table id="albumsTable" class="table table-striped table-bordered" aria-label="Albums Table">
                 <thead class="table-primary">
                     <tr>
+                        <th>#</th> <!-- Row Number -->
                         <th>Artist</th>
                         <th>Album</th>
-                        <th>Cover</th> <!-- Moved Cover here -->
+                        <th>Cover</th>
                         <th>Release Date</th>
                         <th>Country</th>
                         <th>Genre 1</th>
                         <th>Genre 2</th>
-                        <th>Average Rating</th>
                         <th>Total Points</th>
                         <th>Contributors</th>
                     </tr>
@@ -387,6 +358,7 @@
                 <tbody>
                     {% for album in albums %}
                     <tr>
+                        <td>{{ album.row_number }}</td>
                         <td>{{ album.artist }}</td>
                         <td>{{ album.album }}</td>
                         <td>
@@ -400,7 +372,6 @@
                         <td>{{ album.country }}</td>
                         <td>{{ album.genre_1 }}</td>
                         <td>{{ album.genre_2 }}</td>
-                        <td>{{ "{:.2f}".format(album.avg_rating) if album.avg_rating else 'N/A' }}</td>
                         <td>{{ album.total_points }}</td>
                         <td>{{ album.contributors }}</td>
                     </tr>
@@ -414,18 +385,9 @@
     <div id="graphs" class="container graphs section-frame">
         <h2 class="text-center">📈 Graphs 📈</h2>
         <div class="row">
-            <!-- Graph 1: Album Ratings Bar Chart -->
-            <div class="col-lg-6 col-md-12 graph-card">
-                <div class="card">
-                    <div class="card-header">
-                        📊 Album Ratings (Average)
-                    </div>
-                    <div class="card-body">
-                        {{ bar_graph | safe }}
-                    </div>
-                </div>
-            </div>
-            <!-- Graph 2: Genre Distribution Treemap -->
+            <!-- Only non-rating charts shown below -->
+            
+            <!-- Genre Distribution Treemap -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -436,7 +398,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Graph 3: Albums by Country Choropleth Map -->
+            
+            <!-- Albums by Country Choropleth Map -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -447,18 +410,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Graph 4: Average Rating per Artist Bar Chart -->
-            <div class="col-lg-6 col-md-12 graph-card">
-                <div class="card">
-                    <div class="card-header">
-                        ⭐ Average Rating per Artist
-                    </div>
-                    <div class="card-body">
-                        {{ avg_graph | safe }}
-                    </div>
-                </div>
-            </div>
-            <!-- Graph 5: Genre Counts Bar Chart -->
+            
+            <!-- Genre Counts Bar Chart -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -469,29 +422,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Graph 6: Ratings Over Time Line Chart -->
-            <div class="col-lg-6 col-md-12 graph-card">
-                <div class="card">
-                    <div class="card-header">
-                        ⏰ Average Ratings Over Time
-                    </div>
-                    <div class="card-body">
-                        {{ time_graph | safe }}
-                    </div>
-                </div>
-            </div>
-            <!-- Graph 7: User Average Ratings Bar Chart -->
-            <div class="col-lg-6 col-md-12 graph-card">
-                <div class="card">
-                    <div class="card-header">
-                        👤 Average Rating per User
-                    </div>
-                    <div class="card-body">
-                        {{ user_avg_graph | safe }}
-                    </div>
-                </div>
-            </div>
-            <!-- Graph 8: User Album Counts Bar Chart -->
+            
+            <!-- User Album Counts Bar Chart -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -502,7 +434,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Graph 9: User Genre Distribution Heatmap -->
+            
+            <!-- User Genre Distribution -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -513,18 +446,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Graph 10: Ratings Distribution Histogram -->
-            <div class="col-lg-6 col-md-12 graph-card">
-                <div class="card">
-                    <div class="card-header">
-                        📊 Ratings Distribution
-                    </div>
-                    <div class="card-body">
-                        {{ rating_histogram | safe }}
-                    </div>
-                </div>
-            </div>
-            <!-- Graph 11: Genre Popularity Over Months Line Chart -->
+            
+            <!-- Genre Popularity Over Months -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -535,7 +458,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Graph 12: Top Artists Bar Chart -->
+            
+            <!-- Top Artists Bar Chart -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
@@ -559,25 +483,31 @@
     <!-- Initialize DataTables -->
     <script>
         $(document).ready(function() {
+            /*
+              Now we have 10 columns total:
+              0=#,1=Artist,2=Album,3=Cover,4=Release Date,5=Country,
+              6=Genre1,7=Genre2,8=Total Points,9=Contributors
+            */
             $('#albumsTable').DataTable({
                 "paging": true,
                 "searching": true,
                 "ordering": true,
-                "order": [[ 8, "desc" ]],  // 8 corresponds to the 'Total Points' column (0-indexed)
+                "order": [[ 8, "desc" ]], // Sort by total_points (column index 8)
                 "columnDefs": [
-                    { "orderable": false, "targets": [2, 9] }  // Disable sorting on Cover and Contributors
+                    { "orderable": false, "targets": [0, 3, 9] } 
+                    // 0=Row #, 3=Cover, 9=Contributors => not sortable
                 ],
                 "responsive": true,
-                "pageLength": 100, // Set default page length to 100
-                "lengthMenu": [ [25, 50, 100, 200], [25, 50, 100, 200] ], // Define length menu options
+                "pageLength": 100,
+                "lengthMenu": [ [25, 50, 100, 200], [25, 50, 100, 200] ],
                 "language": {
                     "search": "Filter records:",
-                    "lengthMenu": "Show _MENU_ entries" // Optional: Customize the length menu label
+                    "lengthMenu": "Show _MENU_ entries"
                 }
             });
         });
 
-        // Navbar background change on scroll
+        // Navbar background on scroll
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.navbar');
             if (window.scrollY > 50) {
