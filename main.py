@@ -7,7 +7,8 @@ import pandas as pd
 import plotly.express as px
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget,
-    QFileDialog, QMessageBox, QLineEdit, QLabel, QScrollArea, QFrame, QStyle, QSizePolicy
+    QFileDialog, QMessageBox, QLineEdit, QLabel, QScrollArea, QFrame, QStyle, QSizePolicy,
+    QStackedWidget
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QPixmap, QFont, QFontDatabase, QColor, QPalette, QCursor
@@ -18,7 +19,7 @@ from io import BytesIO
 from PIL import Image
 from pathlib import Path
 
-# Import the Spotify style module
+# Import the style module
 import style
 
 def resource_path(relative_path: str) -> str:
@@ -66,44 +67,68 @@ class MainWindow(QMainWindow):
         """Set up the main user interface components."""
         # Main layout
         main_layout = QVBoxLayout()
-        main_layout.setSpacing(20)
-        main_layout.setContentsMargins(30, 30, 30, 30)
+        main_layout.setSpacing(16)  # Reduced spacing
+        main_layout.setContentsMargins(30, 20, 30, 20)  # Reduced top/bottom margins
         
-        # App header with logo/title
-        header_layout = QHBoxLayout()
+        # Header section with integrated load button
+        header_section = QWidget()
+        header_layout = QHBoxLayout(header_section)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Create a stylized logo/title (simulating Spotify logo style)
+        # Title label
         title_label = QLabel("SuSheProcessor")
         title_label.setFont(QFont(style.SPOTIFY_FONT, 24, QFont.Weight.Bold))
         title_label.setStyleSheet(style.TITLE_LABEL_STYLE)
         header_layout.addWidget(title_label)
+        
+        # Add spacer to push title to left and button to right
         header_layout.addStretch()
-        main_layout.addLayout(header_layout)
         
-        # Subtitle
-        subtitle = QLabel("Album data processor and report generator")
-        subtitle.setStyleSheet(style.SUBTITLE_STYLE)
-        main_layout.addWidget(subtitle)
+        # Load JSON Button with icon - moved up
+        self.load_button = style.SpotifyStyleButton(
+            "Import lists", 
+            primary=True,
+            icon=self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogStart)
+        )
+        self.load_button.clicked.connect(self.load_json)
+        header_layout.addWidget(self.load_button)
         
-        # Add separator
+        main_layout.addWidget(header_section)
+        
+        # Add separator line
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         separator.setStyleSheet(style.SEPARATOR_STYLE)
         main_layout.addWidget(separator)
-        main_layout.addSpacing(20)
         
-        # Load JSON Button
-        self.load_button = style.SpotifyStyleButton("Load JSON Data")
-        self.load_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogStart))
-        self.load_button.clicked.connect(self.load_json)
-        main_layout.addWidget(self.load_button)
+        # Files section with improved styling - expanded to use more space
+        files_section = QFrame()
+        files_layout = QVBoxLayout(files_section)
+        files_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Files section header
+        # Files section header with better spacing
+        files_header_layout = QHBoxLayout()
+        files_header_layout.setContentsMargins(5, 0, 5, 5)
+        
         files_header = QLabel("Loaded Files")
-        files_header.setFont(QFont(style.SPOTIFY_FONT, 18, QFont.Weight.Bold))
+        files_header.setFont(QFont(style.SPOTIFY_FONT, 16, QFont.Weight.Bold))
         files_header.setStyleSheet(style.SECTION_HEADER_STYLE)
-        main_layout.addWidget(files_header)
+        files_header_layout.addWidget(files_header)
+        
+        files_header_layout.addStretch()
+        files_layout.addLayout(files_header_layout)
+        
+        # Create a stacked widget to switch between empty state and file list
+        self.files_stack = QStackedWidget()
+        
+        # Empty state widget (shown when no files are loaded)
+        self.empty_state = style.EmptyStateWidget()
+        
+        # Content widget with file list only (header moved outside)
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
         
         # Scroll Area for loaded files
         self.files_scroll_area = QScrollArea()
@@ -111,42 +136,78 @@ class MainWindow(QMainWindow):
         self.files_scroll_area.setStyleSheet(style.SCROLL_AREA_STYLE)
         
         self.files_container = QWidget()
-        self.files_layout = QVBoxLayout()
-        self.files_layout.setSpacing(12)
-        self.files_container.setLayout(self.files_layout)
+        self.files_layout = QVBoxLayout(self.files_container)
+        self.files_layout.setSpacing(2)  # Reduced spacing between items
+        self.files_layout.setContentsMargins(2, 2, 2, 2)  # Minimal margins
         self.files_scroll_area.setWidget(self.files_container)
         
-        # Wrap scroll area in a frame with slight background change to create a "card" effect
+        content_layout.addWidget(self.files_scroll_area)
+        
+        # Add both widgets to the stack
+        self.files_stack.addWidget(self.empty_state)
+        self.files_stack.addWidget(content_widget)
+        self.files_stack.setCurrentIndex(0)  # Start with empty state
+        
+        # Wrap stack in a styled frame
         files_frame = QFrame()
         files_frame.setStyleSheet(style.FILES_FRAME_STYLE)
-        files_layout = QVBoxLayout(files_frame)
-        files_layout.setContentsMargins(10, 10, 10, 10)
-        files_layout.addWidget(self.files_scroll_area)
+        files_frame.setMinimumHeight(300)  # Increased height to use more available space
+        files_frame_layout = QVBoxLayout(files_frame)
+        files_frame_layout.setContentsMargins(10, 10, 10, 10)
+        files_frame_layout.addWidget(self.files_stack)
         
-        main_layout.addWidget(files_frame)
+        files_layout.addWidget(files_frame)
+        main_layout.addWidget(files_section, 1)  # Add stretch factor to make this section expand
         
-        # Action buttons layout
+        # Action buttons layout with better spacing
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(15)
-        buttons_layout.setContentsMargins(0, 20, 0, 10)
+        buttons_layout.setContentsMargins(0, 10, 0, 10)
         
         # Generate HTML Button
-        self.generate_button = style.SpotifyStyleButton("Generate HTML Report", primary=True)
+        self.generate_button = style.SpotifyStyleButton(
+            "Generate HTML Report", 
+            primary=True,
+            icon=QIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton))
+        )
         self.generate_button.clicked.connect(self.generate_html)
         self.generate_button.setEnabled(False)
         buttons_layout.addWidget(self.generate_button)
         
         # Exit Button
-        self.exit_button = style.SpotifyStyleButton("Exit", primary=False)
+        self.exit_button = style.SpotifyStyleButton(
+            "Exit", 
+            primary=False,
+            icon=QIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton))
+        )
         self.exit_button.clicked.connect(self.close)
         buttons_layout.addWidget(self.exit_button)
         
         main_layout.addLayout(buttons_layout)
         
-        # Status message label
+        # Status message label with simpler design
+        status_frame = QFrame()
+        status_frame.setFrameShape(QFrame.Shape.NoFrame)
+        status_layout = QHBoxLayout(status_frame)
+        status_layout.setContentsMargins(5, 0, 5, 0)
+        
+        # Blue info circle icon
+        status_icon = QLabel()
+        status_icon.setFixedSize(16, 16)
+        status_pixmap = self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation).pixmap(12, 12)
+        status_icon.setPixmap(status_pixmap)
+        status_layout.addWidget(status_icon)
+        
+        # Status text
         self.status_label = QLabel("Ready to process files")
         self.status_label.setStyleSheet(style.STATUS_LABEL_STYLE)
-        main_layout.addWidget(self.status_label)
+        self.status_label.setFont(QFont(style.SPOTIFY_FONT, 9))  # Smaller font
+        status_layout.addWidget(self.status_label, 1)  # 1 = stretch factor
+        
+        # Add extra stretch to ensure status stays on left
+        status_layout.addStretch(3)
+        
+        main_layout.addWidget(status_frame)
         
         # Set main layout to central widget
         container = QWidget()
@@ -243,13 +304,17 @@ class MainWindow(QMainWindow):
             # If username was not extracted, inform the user
             if not username:
                 self.show_info("Username Not Found", 
-                             f"No matching username found in the file name '{os.path.basename(path)}'. Please enter it manually.")
+                            f"No matching username found in the file name '{os.path.basename(path)}'. Please enter it manually.")
             
             # Store the file path and username widget
             username_input = file_widget.findChild(QLineEdit)
             username_input.textChanged.connect(self.update_generate_button_state)
             self.loaded_files.append((path, username_input))
         
+        # Update UI state - switch to file list view if files were loaded
+        if self.loaded_files and self.files_stack.currentIndex() == 0:
+            self.files_stack.setCurrentIndex(1)
+            
         self.update_generate_button_state()
         self.status_label.setText(f"{len(self.loaded_files)} files loaded")
 
@@ -268,33 +333,33 @@ class MainWindow(QMainWindow):
         widget.setStyleSheet(style.FILE_ENTRY_STYLE)
         
         layout = QHBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(15)
+        layout.setContentsMargins(8, 4, 8, 4)  # Reduced vertical padding
+        layout.setSpacing(10)  # Slightly reduced spacing
         widget.setLayout(layout)
         
         # File icon
         icon_label = QLabel()
-        pixmap = self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon).pixmap(24, 24)
+        pixmap = self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon).pixmap(16, 16)  # Smaller icon
         icon_label.setPixmap(pixmap)
         layout.addWidget(icon_label)
         
-        # File name
+        # File name with ellipsis for long names
         file_name = os.path.basename(file_path)
         name_label = QLabel(file_name)
-        name_label.setFont(QFont(style.SPOTIFY_FONT, 10))
+        name_label.setFont(QFont(style.SPOTIFY_FONT, 9))  # Smaller font
         name_label.setStyleSheet(style.FILE_NAME_STYLE)
         name_label.setFixedWidth(200)
+        name_label.setToolTip(file_path)  # Show full path on hover
+        # Enable text elision
+        name_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(name_label)
         
-        # Username input
-        username_label = QLabel("Username:")
-        username_label.setStyleSheet(style.USERNAME_LABEL_STYLE)
-        layout.addWidget(username_label)
-        
+        # Username input - simplified to take less space
         username_input = QLineEdit()
-        username_input.setPlaceholderText("Enter username")
-        username_input.setText(default_username)  # Set the default username
-        username_input.setMinimumWidth(150)
+        username_input.setPlaceholderText("Username")
+        username_input.setText(default_username)
+        username_input.setMinimumWidth(120)
+        username_input.setMaximumWidth(150)  # Limit width
         
         if default_username:
             username_input.setToolTip("Username auto-filled from file name.")
@@ -304,10 +369,8 @@ class MainWindow(QMainWindow):
             username_input.setStyleSheet(style.USERNAME_INPUT_ERROR_STYLE)
         layout.addWidget(username_input)
         
-        # Spacer to push elements to the left
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        layout.addWidget(spacer)
+        # Add stretch to fill space (but not a spacer widget)
+        layout.addStretch()
         
         return widget
 
@@ -751,12 +814,25 @@ def main():
     
     # Try to load Spotify-like fonts if available
     try:
-        # Try to load Gotham font if available (using .otf extension)
+        # Try to load Gotham font if available (.otf version)
         id = QFontDatabase.addApplicationFont(resource_path("fonts/Gotham-Medium.otf"))
-        if id < 0:  # If font isn't available, use system default
-            print("Gotham font not available, using system default")
-    except:
-        pass
+        if id < 0:  # Try alternative font files
+            font_paths = [
+                "fonts/Gotham.otf",
+                "fonts/Gotham-Book.otf",
+                "fonts/Gotham-Bold.otf"
+            ]
+            
+            for font_path in font_paths:
+                id = QFontDatabase.addApplicationFont(resource_path(font_path))
+                if id >= 0:
+                    print(f"Loaded font from {font_path}")
+                    break
+            
+            if id < 0:
+                print("Gotham font not available, using system default")
+    except Exception as e:
+        print(f"Error loading font: {e}")
     
     window = MainWindow()
     window.show()
