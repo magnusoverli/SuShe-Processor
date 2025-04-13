@@ -77,7 +77,17 @@
         .navbar-light .navbar-toggler-icon {
             filter: invert(1);
         }
-        
+
+        /* Custom styling for summary values */
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--spotify-green);
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         /* Hero */
         .hero {
             background: linear-gradient(rgba(29, 185, 84, 0.6), rgba(29, 185, 84, 0.3)), 
@@ -93,6 +103,29 @@
             transition: height 0.5s ease;
             border-radius: 15px;
             margin: 0 15px 30px 15px;
+        }
+
+        /* Additional chart styling */
+        .plotly-graph-div {
+            background-color: transparent !important;
+        }
+
+        .plotly-graph-div .svg-container {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Better tooltips for dark theme */
+        .plotly-tooltip {
+            background-color: #282828 !important;
+            color: #ffffff !important;
+            border: 1px solid #535353 !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Ensure chart text is visible */
+        .graph-card text {
+            fill: #b3b3b3 !important;
         }
         
         @media (max-width: 768px) {
@@ -151,6 +184,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
         
+        /* Header styles with dynamic underline */
         .section-frame h2 {
             position: relative;
             display: inline-block;
@@ -158,14 +192,15 @@
             margin-bottom: 30px;
             color: var(--spotify-white);
         }
-        
+
         .section-frame h2::after {
             content: '';
-            display: block;
-            width: 50px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%; /* Change from fixed width (50px) to full width */
             height: 3px;
             background-color: var(--spotify-green);
-            margin-top: 5px;
             border-radius: 2px;
         }
         
@@ -229,6 +264,7 @@
             font-weight: 700;
             border: none;
             border-bottom: 2px solid var(--spotify-green);
+            width: 100%; /* Ensure full width */
         }
         
         .graph-card .card-body {
@@ -491,15 +527,15 @@
                 <div class="summary-item text-center h-100 d-flex flex-column">
                     <i class="fas fa-compact-disc fa-3x mb-3"></i>
                     <h5>Total Albums</h5>
-                    <p class="display-6 mt-auto">{{ total_albums }}</p>
+                    <p class="summary-value mt-auto">{{ total_albums }}</p>
                 </div>
             </div>
-            <!-- Top Artist -->
+            <!-- Top Country -->
             <div class="col-lg-2 col-md-3 col-sm-6 mb-4">
                 <div class="summary-item text-center h-100 d-flex flex-column">
-                    <i class="fas fa-crown fa-3x mb-3"></i>
-                    <h5>Top Artist</h5>
-                    <p class="display-6 mt-auto text-truncate" title="{{ top_artist }}" style="font-size: 1.75rem; font-weight: 700;">{{ top_artist }}</p>
+                    <i class="fas fa-globe-americas fa-3x mb-3"></i>
+                    <h5>Top Country</h5>
+                    <p class="summary-value mt-auto">{{ top_country }}</p>
                 </div>
             </div>
             <!-- Average Points -->
@@ -507,7 +543,7 @@
                 <div class="summary-item text-center h-100 d-flex flex-column">
                     <i class="fas fa-star fa-3x mb-3"></i>
                     <h5>Avg. Points</h5>
-                    <p class="display-6 mt-auto">{{ avg_points }}</p>
+                    <p class="summary-value mt-auto">{{ avg_points }}</p>
                 </div>
             </div>
             <!-- Top Genre -->
@@ -515,7 +551,7 @@
                 <div class="summary-item text-center h-100 d-flex flex-column">
                     <i class="fas fa-tags fa-3x mb-3"></i>
                     <h5>Top Genre</h5>
-                    <p class="mt-auto" style="font-size: 1.5rem; font-weight: 700;">{{ top_genre }}</p>
+                    <p class="summary-value mt-auto">{{ top_genre }}</p>
                 </div>
             </div>
             <!-- Countries Represented -->
@@ -523,7 +559,7 @@
                 <div class="summary-item text-center h-100 d-flex flex-column">
                     <i class="fas fa-globe fa-3x mb-3"></i>
                     <h5>Countries</h5>
-                    <p class="display-6 mt-auto">{{ countries }}</p>
+                    <p class="summary-value mt-auto">{{ countries }}</p>
                 </div>
             </div>
             <!-- Unique Users -->
@@ -531,7 +567,7 @@
                 <div class="summary-item text-center h-100 d-flex flex-column">
                     <i class="fas fa-users fa-3x mb-3"></i>
                     <h5>Contributors</h5>
-                    <p class="display-6 mt-auto">{{ unique_users }}</p>
+                    <p class="summary-value mt-auto">{{ unique_users }}</p>
                 </div>
             </div>
         </div>
@@ -586,8 +622,7 @@
     <div id="graphs" class="container graphs section-frame">
         <h2 class="text-center">📈 Graphs 📈</h2>
         <div class="row">
-            <!-- Only non-rating charts shown below -->
-            
+            <!-- First row -->
             <!-- Genre Distribution Treemap -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
@@ -612,6 +647,7 @@
                 </div>
             </div>
             
+            <!-- Second row -->
             <!-- Genre Counts Bar Chart -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
@@ -636,38 +672,65 @@
                 </div>
             </div>
             
-            <!-- User Genre Distribution -->
+            <!-- Third row -->
+            <!-- Release Timeline -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
-                        🎨 Genre Distribution per User
+                        📅 Album Releases by Month
                     </div>
                     <div class="card-body">
-                        {{ user_genre_graph | safe }}
+                        {{ release_timeline_graph | safe }}
                     </div>
                 </div>
             </div>
             
-            <!-- Genre Popularity Over Months -->
+            <!-- User Agreement Chart -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
-                        🎨 Genre Popularity Over Months
+                        👥 Most Agreed Upon Albums
                     </div>
                     <div class="card-body">
-                        {{ genre_trend_graph | safe }}
+                        {{ user_agreement_graph | safe }}
                     </div>
                 </div>
             </div>
             
-            <!-- Top Artists Bar Chart -->
+            <!-- Fourth row -->
+            <!-- Country-Genre Relationship Chart -->
             <div class="col-lg-6 col-md-12 graph-card">
                 <div class="card">
                     <div class="card-header">
-                        🏆 Top Artists by Total Points
+                        🌍 Genre Distribution by Country
                     </div>
                     <div class="card-body">
-                        {{ top_artists_graph | safe }}
+                        {{ country_genre_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- MOVED UP: User Genre Diversity -->
+            <div class="col-lg-6 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🎵 Genre Diversity by User
+                    </div>
+                    <div class="card-body">
+                        {{ user_genre_diversity_graph | safe }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fifth row - full width -->
+            <!-- Musical Compatibility Matrix -->
+            <div class="col-lg-12 col-md-12 graph-card">
+                <div class="card">
+                    <div class="card-header">
+                        🎵 Musical Compatibility Between Users
+                    </div>
+                    <div class="card-body">
+                        {{ musical_compatibility_graph | safe }}
                     </div>
                 </div>
             </div>
