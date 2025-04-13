@@ -1,17 +1,18 @@
 import os
 import sys
+import platform
 import json
-from typing import List, Tuple, Dict, Optional, Any
+from typing import Tuple, Dict, Optional, Any
 
 import pandas as pd
 import plotly.express as px
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget,
-    QFileDialog, QMessageBox, QLineEdit, QLabel, QScrollArea, QFrame, QStyle, QSizePolicy,
+    QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
+    QFileDialog, QMessageBox, QLineEdit, QLabel, QScrollArea, QFrame, QStyle,
     QStackedWidget
 )
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon, QPixmap, QFont, QFontDatabase, QColor, QPalette, QCursor
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon, QFont, QFontDatabase
 from jinja2 import Environment, FileSystemLoader
 import webbrowser
 import base64
@@ -44,6 +45,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("SuSheProcessor")
         self.setGeometry(100, 100, 800, 600)
+        
+        # Set window icon - ADD THIS CODE
+        icon_path = resource_path('logos/sushe_processor.ico')
+        self.setWindowIcon(QIcon(icon_path))
         
         # Apply Spotify theme to the entire application
         self.apply_spotify_theme()
@@ -1337,6 +1342,27 @@ def main():
     """Entry point for the application."""
     app = QApplication(sys.argv)
     
+    # Set app ID for Windows taskbar icon
+    if platform.system() == 'Windows':
+        try:
+            import ctypes
+            # Use a consistent unique ID based on your app information
+            app_id = f'SuSheProcessor.App.Version.{open(resource_path("version.txt")).read().strip()}'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        except Exception as e:
+            print(f"Warning: Could not set application ID for taskbar icon: {e}")
+    
+    # Set application icon globally (affects both window and taskbar)
+    try:
+        icon_path = resource_path("logos/sushe_processor.ico")
+        if os.path.exists(icon_path):
+            app_icon = QIcon(icon_path)
+            app.setWindowIcon(app_icon)
+        else:
+            print(f"Warning: Icon file not found at {icon_path}")
+    except Exception as e:
+        print(f"Warning: Could not set application icon: {e}")
+    
     # Try to load Spotify-like fonts if available
     try:
         # Try to load Gotham font if available (.otf version)
@@ -1361,8 +1387,9 @@ def main():
     
     window = MainWindow()
     window.show()
-    sys.exit(app.exec())
+    
+    return app.exec()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
