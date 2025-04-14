@@ -4,9 +4,8 @@ This module contains all style definitions, colors, and custom widget classes.
 """
 
 from PyQt6.QtWidgets import QPushButton, QWidget, QLabel, QVBoxLayout
-from PyQt6.QtGui import QFont, QCursor, QIcon, QPixmap
+from PyQt6.QtGui import QFont, QCursor
 from PyQt6.QtCore import Qt, QSize
-import os
 
 # Spotify color palette
 SPOTIFY_BLACK = "#121212"

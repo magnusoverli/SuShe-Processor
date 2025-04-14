@@ -748,9 +748,9 @@ class MainWindow(QMainWindow):
         
         return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
 
-    def create_musical_compatibility_matrix(self, df: pd.DataFrame) -> str:
+    def create_user_compatibility_table(self, df: pd.DataFrame) -> str:
         """
-        Create a visualization showing musical taste compatibility between users.
+        Create a simple table showing musical taste compatibility between users.
         Analyzes genre preferences and identifies similar music tastes.
         """
         import math
@@ -796,19 +796,7 @@ class MainWindow(QMainWindow):
         genre_pivot = genre_pivot.merge(user_totals, on='user')
         genre_pivot['percentage'] = (genre_pivot['count'] / genre_pivot['total'] * 100).round(1)
         
-        # Focus on significant genres (>10% for any user)
-        significant_genres = genre_pivot[genre_pivot['percentage'] >= 10]['genre'].unique()
-        
-        # Limit to top 10 genres if there are too many
-        if len(significant_genres) > 10:
-            genre_overall = genre_pivot.groupby('genre')['count'].sum().reset_index()
-            genre_overall = genre_overall.sort_values('count', ascending=False)
-            significant_genres = genre_overall.head(10)['genre'].tolist()
-        
-        # Filter to significant genres only
-        genre_pivot = genre_pivot[genre_pivot['genre'].isin(significant_genres)]
-        
-        # Create the user-genre percentage matrix
+        # Create the user-genre percentage matrix for calculations
         pivot_table = genre_pivot.pivot_table(
             values='percentage', 
             index='user', 
@@ -816,14 +804,9 @@ class MainWindow(QMainWindow):
             fill_value=0
         )
         
-        # Make sure users are in consistent order (BOP, Magnus, Odd, Ronny)
-        # This order will be shown from top to bottom
+        # Make sure standard users are included (if present)
         standard_order = ['BOP', 'Magnus', 'Odd', 'Ronny']
         available_users = pivot_table.index.tolist()
-        ordered_users = [user for user in standard_order if user in available_users]
-        
-        # Reindex pivot table to use consistent order
-        pivot_table = pivot_table.reindex(ordered_users)
         
         # Calculate user similarity scores
         user_pairs = []
@@ -836,7 +819,7 @@ class MainWindow(QMainWindow):
                     u2_vector = pivot_table.loc[user2].values
                     
                     # Add small variation for realism - no two users are exactly alike
-                    noise = np.random.uniform(0.75, 0.99)
+                    noise = np.random.uniform(0)
                     
                     # Calculate dot product and vector norms
                     dot_product = sum(a * b for a, b in zip(u1_vector, u2_vector))
@@ -864,181 +847,43 @@ class MainWindow(QMainWindow):
         # Sort by similarity score (highest first)
         user_pairs.sort(key=lambda x: x[2], reverse=True)
         
-        # Create a subplot with two side-by-side plots - one for heatmap, one for text
-        from plotly.subplots import make_subplots
-        fig = make_subplots(rows=1, cols=2, column_widths=[0.65, 0.35], horizontal_spacing=0.02)
+        # Create a simple HTML table
+        html = """
+        <div class="section-frame mt-4 mb-4">
+            <h2 class="text-center">🎵 Musical Compatibility Between Users 🎵</h2>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">User Pair</th>
+                            <th scope="col">Compatibility Score</th>
+                            <th scope="col">Common Genre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        """
         
-        # Add the heatmap to the first column - explicitly setting the y-axis order
-        heatmap = px.imshow(
-            pivot_table,
-            labels=dict(x="Genre", y="User", color="% of Collection"),
-            color_continuous_scale="Viridis",
-            text_auto='.1f',  # Show percentages with 1 decimal place
-            y=ordered_users[::-1]  # Reverse order for proper top-to-bottom display
-        )
+        # Add rows for each user pair
+        for i, (user1, user2, sim, genre) in enumerate(user_pairs):
+            html += f"""
+            <tr>
+                <td>{i+1}</td>
+                <td><strong>{user1} & {user2}</strong></td>
+                <td>{sim:.2f}</td>
+                <td>{genre if genre else "N/A"}</td>
+            </tr>
+            """
         
-        # Add heatmap traces to the first subplot
-        for trace in heatmap.data:
-            fig.add_trace(trace, row=1, col=1)
+        # Close the HTML table
+        html += """
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        """
         
-        # Set the main title
-        fig.update_layout(
-            title={
-                'text': 'Musical Taste Compatibility',
-                'y':0.95,
-                'x':0.4,  # Position title over the heatmap
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'font': {'color': '#1DB954', 'size': 20}
-            },
-            margin=dict(t=50, l=50, r=50, b=50),
-            height=600,  # Slightly taller to accommodate all content
-            paper_bgcolor='rgba(30, 30, 30, 0)',
-            plot_bgcolor='rgba(30, 30, 30, 0)',
-            font=dict(color="#b3b3b3")
-        )
-        
-        # Add stronger background panel for compatibility section
-        fig.add_shape(
-            type="rect",
-            x0=0.66,
-            x1=0.99,
-            y0=0.05,
-            y1=0.95,
-            xref="paper",
-            yref="paper",
-            fillcolor="rgba(24, 24, 24, 0.95)",  # Darker, more opaque background
-            line=dict(
-                color="rgba(70, 70, 70, 0.8)",
-                width=2
-            ),
-            layer="below"
-        )
-        
-        # Add compatibility panel title
-        fig.add_annotation(
-            x=0.82,  # Right side
-            y=0.90,
-            xref="paper",
-            yref="paper",
-            text="Most Compatible Users",
-            showarrow=False,
-            font=dict(
-                size=16,
-                color="#1DB954"  # Spotify green
-            ),
-            align="center"
-        )
-        
-        # Add horizontal line under the compatibility title
-        fig.add_shape(
-            type="line",
-            x0=0.68,
-            x1=0.97,
-            y0=0.86,
-            y1=0.86,
-            xref="paper",
-            yref="paper",
-            line=dict(
-                color="#1DB954",
-                width=2
-            )
-        )
-        
-        # Add compatibility details with better spacing
-        y_start = 0.78
-        for i, (user1, user2, sim, genre) in enumerate(user_pairs[:4]):  # Show top 4 pairs
-            y_pos = y_start - (i * 0.18)  # Increased spacing between entries
-            
-            # Add ranking number
-            fig.add_annotation(
-                x=0.70,
-                y=y_pos,
-                xref="paper",
-                yref="paper",
-                text=f"#{i+1}",
-                showarrow=False,
-                font=dict(
-                    size=12,
-                    color="#b3b3b3"
-                ),
-                align="center"
-            )
-            
-            # Add user pair names
-            fig.add_annotation(
-                x=0.82,
-                y=y_pos,
-                xref="paper",
-                yref="paper",
-                text=f"{user1} & {user2}",
-                showarrow=False,
-                font=dict(
-                    size=14,
-                    color="#FFFFFF"
-                ),
-                align="center"
-            )
-            
-            # Add similarity score with more space
-            fig.add_annotation(
-                x=0.82,
-                y=y_pos - 0.045,
-                xref="paper",
-                yref="paper",
-                text=f"Score: {sim:.2f}",
-                showarrow=False,
-                font=dict(
-                    size=12,
-                    color="#b3b3b3"
-                ),
-                align="center"
-            )
-            
-            # Add shared genre if available (with MORE space)
-            if genre:
-                fig.add_annotation(
-                    x=0.82,
-                    y=y_pos - 0.11,  # Increased distance from score
-                    xref="paper",
-                    yref="paper",
-                    text=f"Common genre: {genre}",
-                    showarrow=False,
-                    font=dict(
-                        size=12,
-                        color="#1DB954"
-                    ),
-                    align="center"
-                )
-        
-        # Set up axis labels for heatmap
-        fig.update_xaxes(title_text="Genre", row=1, col=1, 
-                    title_font=dict(color="#b3b3b3"), tickfont=dict(color="#b3b3b3"))
-        fig.update_yaxes(title_text="User", row=1, col=1,
-                    title_font=dict(color="#b3b3b3"), tickfont=dict(color="#b3b3b3"))
-        
-        # Remove axes from the right subplot (compatibility section)
-        fig.update_xaxes(showticklabels=False, showgrid=False, zeroline=False, row=1, col=2)
-        fig.update_yaxes(showticklabels=False, showgrid=False, zeroline=False, row=1, col=2)
-        
-        # Position colorbar better
-        fig.update_layout(
-            coloraxis=dict(
-                colorscale="Viridis",
-                colorbar=dict(
-                    title="% of Collection",
-                    titleside="right",
-                    ticks="outside",
-                    tickfont=dict(color="#b3b3b3"),
-                    titlefont=dict(color="#b3b3b3"),
-                    x=0.64,  # Position the colorbar between the two plots
-                    y=0.5,   # Center it vertically
-                    len=0.9  # Make it a bit shorter
-                )
-            )
-        )
-        
-        return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
+        return html
 
     def create_country_genre_chart(self, df: pd.DataFrame) -> str:
         """Create a heatmap showing the relationship between countries and genres."""
@@ -1241,7 +1086,7 @@ class MainWindow(QMainWindow):
             'user_agreement_graph': self.create_user_agreement_chart(df),
             'country_genre_graph': self.create_country_genre_chart(df),
             'user_genre_diversity_graph': self.create_user_genre_diversity(df),
-            'musical_compatibility_graph': self.create_musical_compatibility_matrix(df)
+            'musical_compatibility_graph': self.create_user_compatibility_table(df)
         }
         return charts
 
