@@ -20,7 +20,6 @@ from io import BytesIO
 from PIL import Image
 from pathlib import Path
 
-# Import the style module
 import style
 
 def resource_path(relative_path: str) -> str:
@@ -751,10 +750,10 @@ class MainWindow(QMainWindow):
     def create_user_compatibility_table(self, df: pd.DataFrame) -> str:
         """
         Create a simple table showing musical taste compatibility between users.
-        Analyzes genre preferences and identifies similar music tastes.
+        Analyzes genre preferences and identifies similar music tastes using
+        a deterministic calculation for consistent results.
         """
         import math
-        import numpy as np
         
         # Extract user information and genres from the contributors field
         def extract_users_and_genres(row):
@@ -804,13 +803,10 @@ class MainWindow(QMainWindow):
             fill_value=0
         )
         
-        # Make sure standard users are included (if present)
-        standard_order = ['BOP', 'Magnus', 'Odd', 'Ronny']
-        available_users = pivot_table.index.tolist()
-        
-        # Calculate user similarity scores
+        # Calculate user similarity scores - pure cosine similarity without randomness
         user_pairs = []
-        users = pivot_table.index.tolist()
+        users = sorted(pivot_table.index.tolist())  # Sort users for consistent order
+        
         for i, user1 in enumerate(users):
             for j, user2 in enumerate(users):
                 if i < j:  # Only count each pair once
@@ -818,39 +814,39 @@ class MainWindow(QMainWindow):
                     u1_vector = pivot_table.loc[user1].values
                     u2_vector = pivot_table.loc[user2].values
                     
-                    # Add small variation for realism - no two users are exactly alike
-                    noise = np.random.uniform(0)
-                    
                     # Calculate dot product and vector norms
                     dot_product = sum(a * b for a, b in zip(u1_vector, u2_vector))
                     norm_u1 = math.sqrt(sum(a * a for a in u1_vector))
                     norm_u2 = math.sqrt(sum(b * b for b in u2_vector))
                     
+                    # Pure cosine similarity calculation - no randomness
+                    similarity = 0.0
                     if norm_u1 > 0 and norm_u2 > 0:
-                        # Apply noise to similarity for more realistic scores
-                        similarity = (dot_product / (norm_u1 * norm_u2)) * noise
+                        similarity = dot_product / (norm_u1 * norm_u2)
                         
                         # Identify shared favorite genres
                         shared_genres = []
-                        for genre in pivot_table.columns:
+                        for genre in sorted(pivot_table.columns):  # Sort genres for consistency
                             u1_pct = pivot_table.loc[user1, genre]
                             u2_pct = pivot_table.loc[user2, genre]
                             if u1_pct >= 15 and u2_pct >= 15:  # Both users have significant preference
                                 shared_genres.append((genre, min(u1_pct, u2_pct)))
                         
+                        # Sort shared genres by preference percentage for consistent results
+                        shared_genres.sort(key=lambda x: (-x[1], x[0]))
+                        
                         top_shared = ""
                         if shared_genres:
-                            top_shared = max(shared_genres, key=lambda x: x[1])[0]
+                            top_shared = shared_genres[0][0]
                         
                         user_pairs.append((user1, user2, similarity, top_shared))
         
-        # Sort by similarity score (highest first)
-        user_pairs.sort(key=lambda x: x[2], reverse=True)
+        # Sort by similarity score (highest first), with consistent tiebreaking
+        user_pairs.sort(key=lambda x: (-x[2], x[0], x[1]))
         
         # Create a simple HTML table
         html = """
         <div class="section-frame mt-4 mb-4">
-            <h2 class="text-center">🎵 Musical Compatibility Between Users 🎵</h2>
             <div class="table-responsive">
                 <table class="table table-dark table-striped table-bordered">
                     <thead>
