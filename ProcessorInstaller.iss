@@ -119,13 +119,13 @@ begin
     if UninstallOption.Checked then
     begin
       // Confirm uninstallation
-      if MsgBox('Are you sure you want to uninstall Album Presentation App?', mbConfirmation, MB_YESNO) = IDYES then
+      if MsgBox('Are you sure you want to uninstall SuShe Processor?', mbConfirmation, MB_YESNO) = IDYES then
       begin
         // Run the uninstaller silently
         if ShellExec('', ExpandConstant('{uninstallexe}'), '/VERYSILENT /NORESTART', '', SW_SHOWNORMAL, ewWaitUntilTerminated, ErrorCode) then
         begin
           // Notify the user and exit the setup
-          MsgBox('Album Presentation App has been uninstalled.', mbInformation, MB_OK);
+          MsgBox('SuShe Processor has been uninstalled.', mbInformation, MB_OK);
           Result := False; // Prevent moving to the next page
           Abort(); // Exit the setup
         end
@@ -154,6 +154,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if (CurStep = ssInstall) and IsUpgrade and UpgradeOption.Checked then
   begin
-    MsgBox('Upgrading Album Presentation App to version ' + ExpandConstant('{appversion}'), mbInformation, MB_OK);
+    MsgBox('Upgrading SuShe Processor to version ' + ExpandConstant('{appversion}'), mbInformation, MB_OK);
   end;
 end;

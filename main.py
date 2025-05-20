@@ -994,67 +994,6 @@ class MainWindow(QMainWindow):
         fig.update_layout(margin=dict(t=0, l=0, r=0, b=0), height=500, showlegend=False)
         return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
 
-    def create_user_genre_chart(self, df: pd.DataFrame) -> str:
-        """Create a scatter plot of user genre distribution."""
-        user_g1 = df[['username', 'genre_1']].rename(columns={'genre_1': 'genre'}).dropna()
-        user_g2 = df[['username', 'genre_2']].rename(columns={'genre_2': 'genre'}).dropna()
-        user_genre_counts = pd.concat([user_g1, user_g2], ignore_index=True)
-        user_genre_counts = user_genre_counts.groupby(['username', 'genre']).size().reset_index(name='count')
-        
-        fig = px.scatter(
-            user_genre_counts,
-            x='username',
-            y='genre',
-            size='count',
-            color='genre',
-            labels={'username': 'User', 'genre': 'Genre', 'count': 'Albums'},
-            height=500
-        )
-        fig.update_layout(margin=dict(t=0, l=0, r=0, b=0), showlegend=False)
-        return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
-
-    def create_genre_trend_chart(self, df: pd.DataFrame) -> str:
-        """Create a trend chart of genre popularity over time."""
-        genre_trend = df.explode(['genre_1', 'genre_2'])
-        genre_trend = genre_trend.melt(
-            id_vars=['month'],
-            value_vars=['genre_1', 'genre_2'],
-            var_name='genre_type',
-            value_name='genre'
-        ).dropna(subset=['genre'])
-        
-        genre_trend_count = genre_trend.groupby(['month', 'genre']).size().reset_index(name='count')
-        genre_trend_count['month_name'] = pd.to_datetime(genre_trend_count['month'], format='%m').dt.strftime('%B')
-        genre_trend_count.sort_values('month', inplace=True)
-        
-        fig = px.scatter(
-            genre_trend_count,
-            x='month_name',
-            y='count',
-            color='genre',
-            labels={'month_name': 'Month', 'count': 'Albums'},
-            height=500
-        )
-        fig.update_layout(margin=dict(t=0, l=0, r=0, b=0), showlegend=False)
-        return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
-
-    def create_top_artists_chart(self, df: pd.DataFrame) -> str:
-        """Create a bar chart of top artists by total points."""
-        top_artists = df.groupby('artist')['total_points'].sum().reset_index().sort_values(
-            by='total_points', ascending=False
-        ).head(10)
-        
-        fig = px.bar(
-            top_artists,
-            x='artist',
-            y='total_points',
-            labels={'artist': 'Artist', 'total_points': 'Total Points'},
-            color='total_points',
-            color_continuous_scale='YlGnBu'
-        )
-        fig.update_layout(margin=dict(t=0, l=0, r=0, b=0), height=500, showlegend=False)
-        return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
-
     def create_charts(self, df: pd.DataFrame, genre_counts: pd.DataFrame) -> Dict[str, str]:
         """
         Create all chart visualizations.
@@ -1069,13 +1008,15 @@ class MainWindow(QMainWindow):
         self.status_label.setText("Creating visualizations...")
         
         charts = {
-            # Original charts (removed top_artists_graph)
+            # Keep only charts that are used in the template
             'treemap_graph': self.create_genre_treemap(genre_counts),
             'map_graph': self.create_country_choropleth(df),
             'genre_graph': self.create_genre_bar_chart(genre_counts),
             'user_counts_graph': self.create_user_album_counts(df),
-            'user_genre_graph': self.create_user_genre_chart(df),
-            'genre_trend_graph': self.create_genre_trend_chart(df),
+            
+            # Remove unused charts
+            # 'user_genre_graph': self.create_user_genre_chart(df),
+            # 'genre_trend_graph': self.create_genre_trend_chart(df),
             
             # New charts
             'release_timeline_graph': self.create_release_timeline(df),
