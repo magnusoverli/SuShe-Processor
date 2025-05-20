@@ -321,10 +321,10 @@
         }
         
         img {
-            width: 60px;
-            height: 60px;
+            width: 65px;
+            height: 65px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 9px;
             transition: transform 0.3s;
         }
         
@@ -486,6 +486,57 @@
             background-color: #1a1a1a !important;
             --bs-table-accent-bg: #1a1a1a !important;
         }
+
+        /* New Container Width Settings */
+        .container-wider {
+            width: 100%;
+            padding-right: var(--bs-gutter-x, 0.75rem);
+            padding-left: var(--bs-gutter-x, 0.75rem);
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        /* Custom wider container breakpoints */
+        @media (min-width: 576px) {
+            .container-wider {
+                max-width: 540px;
+            }
+        }
+        @media (min-width: 768px) {
+            .container-wider {
+                max-width: 720px;
+            }
+        }
+        @media (min-width: 992px) {
+            .container-wider {
+                max-width: 960px;
+            }
+        }
+        @media (min-width: 1200px) {
+            .container-wider {
+                max-width: 1400px; /* Increased from 1140px */
+            }
+        }
+        @media (min-width: 1400px) {
+            .container-wider {
+                max-width: 1700px; /* Increased from 1320px */
+            }
+        }
+
+        /* Adjust padding for the wider layout */
+        @media (min-width: 1200px) {
+            .section-frame {
+                padding: 30px 40px;
+            }
+        }
+
+        /* Specific styling for album cover column */
+        #albumsTable th:nth-child(4),
+        #albumsTable td:nth-child(4) {
+            padding: 5px 7px;
+            text-align: center;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -519,7 +570,7 @@
     </div>
     
     <!-- Summary Section -->
-    <div id="summary" class="container summary mx-auto section-frame mt-4">
+    <div id="summary" class="container-wider summary mx-auto section-frame mt-4">
         <h2 class="text-center">📊 Summary 📊</h2>
         <div class="row justify-content-center align-items-stretch">
             <!-- Total Albums -->
@@ -574,7 +625,7 @@
     </div>
     
     <!-- Albums Table Section -->
-    <div id="albums" class="container albums-section section-frame">
+    <div id="albums" class="container-wider albums-section section-frame">
         <h2 class="text-center">📄 Albums Table 📄</h2>
         <div class="table-responsive">
             <table id="albumsTable" class="table table-striped table-bordered" aria-label="Albums Table">
@@ -619,7 +670,7 @@
     </div>
     
     <!-- Graphs Section -->
-    <div id="graphs" class="container graphs section-frame">
+    <div id="graphs" class="container-wider graphs section-frame">
         <h2 class="text-center">📈 Graphs 📈</h2>
         <div class="row">
             <!-- First row -->
