@@ -979,14 +979,6 @@ class MainWindow(QMainWindow):
                             0.20 * artist_similarity
                         )
                     
-                    # Identify shared favorite genres (for display purposes)
-                    shared_genres = []
-                    for genre in sorted(genre_pivot_table.columns):
-                        u1_pct = pd.to_numeric(genre_pivot_table.loc[user1, genre], errors='coerce')
-                        u2_pct = pd.to_numeric(genre_pivot_table.loc[user2, genre], errors='coerce')
-                        if u1_pct >= 15 and u2_pct >= 15:
-                            shared_genres.append((genre, min(u1_pct, u2_pct)))
-                    
                     # Identify shared avoided genres
                     shared_avoids = sorted(list(u1_absences.intersection(u2_absences)))
                     
@@ -1018,11 +1010,7 @@ class MainWindow(QMainWindow):
                     shared_artists = u1_artists.intersection(u2_artists)
                     shared_artist_count = len(shared_artists)
                     
-                    # Sort shared genres by percentage (highest first)
-                    shared_genres.sort(key=lambda x: (-x[1], x[0]))
-                    top_shared = shared_genres[0][0] if shared_genres else "None"
-                    
-                    # Store comprehensive similarity data ALONG WITH FULL AVOIDANCE DATA
+                    # Store comprehensive similarity data with full avoidance data
                     # This ensures each pair preserves their unique avoidance information
                     user_pairs.append((
                         user1, user2, 
@@ -1031,8 +1019,7 @@ class MainWindow(QMainWindow):
                         weighted_similarity,
                         absence_similarity,
                         artist_similarity,
-                        top_shared,
-                        shared_avoids,  # Store the actual list, not the display string
+                        shared_avoids,  # Store the actual list of shared avoided genres
                         shared_artist_count
                     ))
         
@@ -1050,7 +1037,6 @@ class MainWindow(QMainWindow):
                             <th scope="col">User Pair</th>
                             <th scope="col">Compatibility</th>
                             <th scope="col">Similarity Breakdown</th>
-                            <th scope="col">Common Genre</th>
                             <th scope="col">Shared Avoidances</th>
                             <th scope="col">Shared Artists</th>
                         </tr>
@@ -1060,7 +1046,7 @@ class MainWindow(QMainWindow):
         
         # Add rows for each user pair
         for i, pair_data in enumerate(user_pairs):
-            user1, user2, combined, genre_sim, weighted_sim, absence_sim, artist_sim, genre, shared_avoids, artist_count = pair_data
+            user1, user2, combined, genre_sim, weighted_sim, absence_sim, artist_sim, shared_avoids, artist_count = pair_data
             
             # Format the breakdown to show individual components
             breakdown = f"""
@@ -1095,7 +1081,6 @@ class MainWindow(QMainWindow):
                 <td><strong>{user1} & {user2}</strong></td>
                 <td><strong>{combined:.2f}</strong></td>
                 <td>{breakdown}</td>
-                <td>{genre}</td>
                 <td>{avoidance_display}</td>
                 <td>{artist_count}</td>
             </tr>
