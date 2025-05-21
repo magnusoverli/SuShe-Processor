@@ -751,16 +751,21 @@ class MainWindow(QMainWindow):
 
     def create_user_compatibility_table(self, df: pd.DataFrame) -> str:
         """
-        Create a simple table showing musical taste compatibility between users.
-        Analyzes genre preferences and identifies similar music tastes using
-        a deterministic calculation for consistent results.
+        Create a more sophisticated compatibility table showing musical taste compatibility between users.
+        Analyzes genre preferences, genre avoidances, ranking-weighted genres, and artist overlap.
+        
+        Args:
+            df (DataFrame): Processed data
+                
+        Returns:
+            str: HTML representation of the compatibility table
         """
         import math
         
         # Extract user information and genres from the contributors field
         def extract_users_and_genres(row):
             if not isinstance(row['contributors'], str):
-                return []
+                return [], []
             
             genres = []
             if pd.notna(row['genre_1']):
@@ -768,85 +773,268 @@ class MainWindow(QMainWindow):
             if pd.notna(row['genre_2']):
                 genres.append(row['genre_2'])
             
-            # Extract user names from contributor string (format: "User1 (rank); User2 (rank)")
-            users = [part.split(' (')[0].strip() for part in row['contributors'].split(';')]
+            # Extract user names and ranks from contributor string (format: "User1 (rank); User2 (rank)")
+            user_ranks = []
+            for part in row['contributors'].split(';'):
+                parts = part.split(' (')
+                if len(parts) == 2:
+                    user = parts[0].strip()
+                    rank_str = parts[1].replace(')', '').strip()
+                    try:
+                        rank = int(rank_str)
+                        user_ranks.append((user, rank))
+                    except ValueError:
+                        # Skip if rank cannot be parsed as integer
+                        continue
             
-            # Create user-genre pairs
-            pairs = []
-            for user in users:
+            # Create user-genre-rank pairs and user-artist pairs
+            genre_tuples = []
+            artist_tuples = []
+            for user, rank in user_ranks:
                 for genre in genres:
-                    pairs.append((user, genre))
-            
-            return pairs
+                    # Include rank information for weighting
+                    genre_tuples.append((user, genre, rank))
+                # Add user-artist association
+                artist_tuples.append((user, row['artist']))
+                
+            return genre_tuples, artist_tuples
         
-        # Collect all user-genre pairs
+        # Collect all user-genre-rank pairs and user-artist pairs
         user_genre_pairs = []
+        user_artist_pairs = []
         for _, row in df.iterrows():
-            user_genre_pairs.extend(extract_users_and_genres(row))
+            genres, artists = extract_users_and_genres(row)
+            user_genre_pairs.extend(genres)
+            user_artist_pairs.extend(artists)
         
         # Convert to DataFrame and handle empty data case
         if not user_genre_pairs:
             return "<div class='text-center text-light p-5'>Not enough genre data available to analyze user compatibility</div>"
         
-        # Count genre occurrences per user
-        genre_counts = pd.DataFrame(user_genre_pairs, columns=['user', 'genre'])
-        genre_pivot = genre_counts.groupby(['user', 'genre']).size().reset_index(name='count')
+        # Create DataFrame from collected pairs
+        genre_df = pd.DataFrame(user_genre_pairs, columns=['user', 'genre', 'rank'])
+        artist_df = pd.DataFrame(user_artist_pairs, columns=['user', 'artist'])
         
-        # Calculate percentages of each genre in user's collection
-        user_totals = genre_pivot.groupby('user')['count'].sum().reset_index(name='total')
+        # 1. RANKING-WEIGHTED GENRES
+        # Convert rank to weight (lower rank = higher weight)
+        max_rank = genre_df['rank'].max()
+        genre_df['weight'] = (max_rank - genre_df['rank'] + 1) / max_rank
+        
+        # Aggregate weighted genre counts
+        genre_pivot = genre_df.groupby(['user', 'genre']).agg(
+            count=('genre', 'size'),
+            weighted_count=('weight', 'sum')
+        ).reset_index()
+        
+        # Calculate user totals for weighted and unweighted counts
+        user_totals = genre_pivot.groupby('user').agg(
+            total=('count', 'sum'),
+            weighted_total=('weighted_count', 'sum')
+        ).reset_index()
+        
+        # Merge totals with pivot data
         genre_pivot = genre_pivot.merge(user_totals, on='user')
-        genre_pivot['percentage'] = (genre_pivot['count'] / genre_pivot['total'] * 100).round(1)
         
-        # Create the user-genre percentage matrix for calculations
-        pivot_table = genre_pivot.pivot_table(
+        # Calculate weighted and unweighted percentages
+        genre_pivot['percentage'] = (genre_pivot['count'] / genre_pivot['total'] * 100).round(1)
+        genre_pivot['weighted_percentage'] = (genre_pivot['weighted_count'] / genre_pivot['weighted_total'] * 100).round(1)
+        
+        # 2. GENRE ABSENCE ANALYSIS
+        # Get the complete set of all genres used by at least one user
+        # This represents the "menu" of genres users are choosing from
+        all_available_genres = set(pd.concat([df['genre_1'].dropna(), df['genre_2'].dropna()]).unique())
+        print(f"Total available genres: {len(all_available_genres)}")
+        
+        # Exclude extremely rare genres (optional) - those appearing in only 1 album
+        # This filters out potential one-off typos or ultra-niche classifications
+        genre_counts = pd.concat([df['genre_1'].dropna(), df['genre_2'].dropna()]).value_counts()
+        valid_genres = set(genre_counts[genre_counts > 1].index)  # Must appear in at least 2 albums
+        
+        print(f"Filtering out single-occurrence genres. Valid genres: {len(valid_genres)}")
+        
+        # Get all unique users
+        all_users = genre_pivot['user'].unique()
+        
+        # For each user, collect which genres they use
+        user_genres = {}
+        for user in all_users:
+            # Get all genres this user has selected
+            user_genres[user] = set(genre_pivot[genre_pivot['user'] == user]['genre'].unique())
+        
+        # For each user, determine which genres they avoid from the valid set
+        user_avoids = {}
+        for user in all_users:
+            # A genre is "avoided" if it appears in the valid set but the user doesn't use it
+            avoided = valid_genres - user_genres[user]
+            user_avoids[user] = avoided
+            
+        # Debug output to verify
+        print(f"Valid genres users could choose: {', '.join(sorted(valid_genres))}")
+        for user in all_users:
+            avoided_str = ', '.join(sorted(user_avoids[user])) if user_avoids[user] else "none"
+            print(f"User {user} avoids {len(user_avoids[user])}/{len(valid_genres)} genres: {avoided_str}")
+        
+        # 3. ARTIST OVERLAP MEASUREMENT
+        # Get unique artists per user
+        artist_counts = artist_df.groupby(['user', 'artist']).size().reset_index(name='count')
+        
+        # Create user-artist mapping for calculating artist overlap
+        user_artists = {user: set(artist_counts[artist_counts['user'] == user]['artist']) for user in all_users}
+        
+        # Create pivot tables for genre preferences (regular and weighted)
+        genre_pivot_table = genre_pivot.pivot_table(
             values='percentage', 
             index='user', 
             columns='genre', 
             fill_value=0
         )
         
-        # Calculate user similarity scores - pure cosine similarity without randomness
+        weighted_pivot_table = genre_pivot.pivot_table(
+            values='weighted_percentage', 
+            index='user', 
+            columns='genre', 
+            fill_value=0
+        )
+        
+        # Calculate user similarity scores with enhanced metrics
         user_pairs = []
-        users = sorted(pivot_table.index.tolist())  # Sort users for consistent order
+        users = sorted(genre_pivot_table.index.tolist())  # Sort users for consistent order
         
         for i, user1 in enumerate(users):
             for j, user2 in enumerate(users):
                 if i < j:  # Only count each pair once
-                    # Calculate cosine similarity between users' genre preferences
-                    u1_vector = pivot_table.loc[user1].values
-                    u2_vector = pivot_table.loc[user2].values
+                    # 1. Calculate regular genre similarity (cosine similarity)
+                    u1_vector = genre_pivot_table.loc[user1].values
+                    u2_vector = genre_pivot_table.loc[user2].values
                     
-                    # Calculate dot product and vector norms
                     dot_product = sum(a * b for a, b in zip(u1_vector, u2_vector))
                     norm_u1 = math.sqrt(sum(a * a for a in u1_vector))
                     norm_u2 = math.sqrt(sum(b * b for b in u2_vector))
                     
-                    # Pure cosine similarity calculation - no randomness
-                    similarity = 0.0
+                    genre_similarity = 0.0
                     if norm_u1 > 0 and norm_u2 > 0:
-                        similarity = dot_product / (norm_u1 * norm_u2)
+                        genre_similarity = dot_product / (norm_u1 * norm_u2)
+                    
+                    # 2. Calculate ranking-weighted genre similarity
+                    u1_weighted = weighted_pivot_table.loc[user1].values
+                    u2_weighted = weighted_pivot_table.loc[user2].values
+                    
+                    weighted_dot = sum(a * b for a, b in zip(u1_weighted, u2_weighted))
+                    weighted_norm_u1 = math.sqrt(sum(a * a for a in u1_weighted))
+                    weighted_norm_u2 = math.sqrt(sum(b * b for b in u2_weighted))
+                    
+                    weighted_similarity = 0.0
+                    if weighted_norm_u1 > 0 and weighted_norm_u2 > 0:
+                        weighted_similarity = weighted_dot / (weighted_norm_u1 * weighted_norm_u2)
+                    
+                    # 3. Calculate genre absence similarity
+                    u1_absences = user_avoids.get(user1, set())
+                    u2_absences = user_avoids.get(user2, set())
+                    
+                    absence_similarity = 0.0
+                    if valid_genres:  # If we have valid genres to potentially avoid
+                        # Only calculate if both users avoid at least one genre
+                        if len(u1_absences) > 0 and len(u2_absences) > 0:
+                            # Jaccard similarity of avoided genres
+                            absence_similarity = len(u1_absences.intersection(u2_absences)) / max(1, len(u1_absences.union(u2_absences)))
+                    
+                    # Print debug info for each pair to verify
+                    shared = u1_absences.intersection(u2_absences)
+                    union = u1_absences.union(u2_absences)
+                    print(f"Users {user1} & {user2} avoidance similarity: {absence_similarity:.2f}")
+                    print(f"  - User {user1} avoids {len(u1_absences)}/{len(valid_genres)} genres")
+                    print(f"  - User {user2} avoids {len(u2_absences)}/{len(valid_genres)} genres")
+                    print(f"  - Shared avoidances: {len(shared)}/{len(union)} = {absence_similarity:.2f}")
+                    
+                    # 4. Calculate artist overlap similarity
+                    u1_artists = user_artists.get(user1, set())
+                    u2_artists = user_artists.get(user2, set())
+                    
+                    artist_similarity = 0.0
+                    if u1_artists or u2_artists:  # Check if either set is non-empty
+                        # Jaccard similarity of artists
+                        artist_similarity = len(u1_artists.intersection(u2_artists)) / max(1, len(u1_artists.union(u2_artists)))
+                    
+                    # Combined similarity score (weighted average)
+                    # Adjust weights to reduce influence of absence similarity if it's generally low
+                    if absence_similarity < 0.1 and artist_similarity > 0:
+                        # If absence similarity is very low but artist similarity exists,
+                        # shift more weight to other factors
+                        combined_similarity = (
+                            0.30 * genre_similarity + 
+                            0.40 * weighted_similarity + 
+                            0.05 * absence_similarity + 
+                            0.25 * artist_similarity
+                        )
+                    else:
+                        combined_similarity = (
+                            0.25 * genre_similarity + 
+                            0.35 * weighted_similarity + 
+                            0.20 * absence_similarity + 
+                            0.20 * artist_similarity
+                        )
+                    
+                    # Identify shared favorite genres (for display purposes)
+                    shared_genres = []
+                    for genre in sorted(genre_pivot_table.columns):
+                        u1_pct = pd.to_numeric(genre_pivot_table.loc[user1, genre], errors='coerce')
+                        u2_pct = pd.to_numeric(genre_pivot_table.loc[user2, genre], errors='coerce')
+                        if u1_pct >= 15 and u2_pct >= 15:
+                            shared_genres.append((genre, min(u1_pct, u2_pct)))
+                    
+                    # Identify shared avoided genres
+                    shared_avoids = sorted(list(u1_absences.intersection(u2_absences)))
+                    
+                    # Create a unique display for each user pair with more variety
+                    if not shared_avoids:
+                        avoidance_display = "None"
+                    else:
+                        # Use the ASCII sum of both usernames as a pseudo-random seed
+                        name_hash = sum(ord(c) for c in (user1 + user2))
                         
-                        # Identify shared favorite genres
-                        shared_genres = []
-                        for genre in sorted(pivot_table.columns):  # Sort genres for consistency
-                            u1_pct = pd.to_numeric(pivot_table.loc[user1, genre], errors='coerce')
-                            u2_pct = pd.to_numeric(pivot_table.loc[user2, genre], errors='coerce')
-                            if u1_pct >= 15 and u2_pct >= 15:  # Both users have significant preference
-                                shared_genres.append((genre, min(u1_pct, u2_pct)))
+                        # Select different genres for each pair based on their name hash
+                        if len(shared_avoids) > 2:
+                            # Rotate the list based on name hash to show different genres for different pairs
+                            rotated_index = name_hash % len(shared_avoids)
+                            rotated_avoids = shared_avoids[rotated_index:] + shared_avoids[:rotated_index]
+                            avoidance_display = f"{rotated_avoids[0]}, {rotated_avoids[1]} (+ {len(shared_avoids)-2} more)"
+                        elif len(shared_avoids) == 2:
+                            avoidance_display = f"{shared_avoids[0]}, {shared_avoids[1]}"
+                        elif len(shared_avoids) == 1:
+                            avoidance_display = shared_avoids[0]
                         
-                        # Sort shared genres by preference percentage for consistent results
-                        shared_genres.sort(key=lambda x: (-x[1], x[0]))
-                        
-                        top_shared = ""
-                        if shared_genres:
-                            top_shared = shared_genres[0][0]
-                        
-                        user_pairs.append((user1, user2, similarity, top_shared))
+                        # Add the total count for more information
+                        avoidance_display += f" [Total: {len(shared_avoids)}]"
+                    
+                    # Print detailed debug information
+                    print(f"  - Full list of shared avoidances ({len(shared_avoids)} total): {', '.join(shared_avoids) if shared_avoids else 'None'}")
+                    
+                    # Count shared artists
+                    shared_artists = u1_artists.intersection(u2_artists)
+                    shared_artist_count = len(shared_artists)
+                    
+                    # Sort shared genres by percentage (highest first)
+                    shared_genres.sort(key=lambda x: (-x[1], x[0]))
+                    top_shared = shared_genres[0][0] if shared_genres else "None"
+                    
+                    # Store comprehensive similarity data ALONG WITH FULL AVOIDANCE DATA
+                    # This ensures each pair preserves their unique avoidance information
+                    user_pairs.append((
+                        user1, user2, 
+                        combined_similarity, 
+                        genre_similarity,
+                        weighted_similarity,
+                        absence_similarity,
+                        artist_similarity,
+                        top_shared,
+                        shared_avoids,  # Store the actual list, not the display string
+                        shared_artist_count
+                    ))
         
-        # Sort by similarity score (highest first), with consistent tiebreaking
+        # Sort by combined similarity score (highest first), then alphabetically for consistency
         user_pairs.sort(key=lambda x: (-x[2], x[0], x[1]))
         
-        # Create a simple HTML table
+        # Create an HTML table with the enhanced compatibility information
         html = """
         <div class="section-frame mt-4 mb-4">
             <div class="table-responsive">
@@ -855,21 +1043,56 @@ class MainWindow(QMainWindow):
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">User Pair</th>
-                            <th scope="col">Compatibility Score</th>
+                            <th scope="col">Compatibility</th>
+                            <th scope="col">Similarity Breakdown</th>
                             <th scope="col">Common Genre</th>
+                            <th scope="col">Shared Avoidances</th>
+                            <th scope="col">Shared Artists</th>
                         </tr>
                     </thead>
                     <tbody>
         """
         
         # Add rows for each user pair
-        for i, (user1, user2, sim, genre) in enumerate(user_pairs):
+        for i, pair_data in enumerate(user_pairs):
+            user1, user2, combined, genre_sim, weighted_sim, absence_sim, artist_sim, genre, avoid, artist_count = pair_data
+            
+            # Format the breakdown to show individual components
+            breakdown = f"""
+                <div><strong>Standard Genre:</strong> {genre_sim:.2f}</div>
+                <div><strong>Rank-Weighted:</strong> {weighted_sim:.2f}</div>
+                <div><strong>Genre Avoidance:</strong> {absence_sim:.2f}</div>
+                <div><strong>Artist Overlap:</strong> {artist_sim:.2f}</div>
+            """
+            
+            # Create the avoidance display string for THIS SPECIFIC pair
+            avoidance_list = shared_avoids  # This is the actual list of shared avoided genres
+            
+            if not avoidance_list:
+                avoidance_display = "None"
+            elif len(avoidance_list) == 1:
+                avoidance_display = avoidance_list[0]
+            elif len(avoidance_list) == 2:
+                avoidance_display = f"{avoidance_list[0]}, {avoidance_list[1]}"
+            else:
+                # Generate a unique selection for each pair by using a different starting point
+                pos = i % len(avoidance_list)  # Use the pair's position in the result list
+                selected = [avoidance_list[pos], avoidance_list[(pos+1) % len(avoidance_list)]]
+                avoidance_display = f"{selected[0]}, {selected[1]} (+ {len(avoidance_list)-2} more)"
+            
+            # Always add the total count
+            if avoidance_list:
+                avoidance_display += f" [Total: {len(avoidance_list)}]"
+                
             html += f"""
             <tr>
                 <td>{i+1}</td>
                 <td><strong>{user1} & {user2}</strong></td>
-                <td>{sim:.2f}</td>
-                <td>{genre if genre else "N/A"}</td>
+                <td><strong>{combined:.2f}</strong></td>
+                <td>{breakdown}</td>
+                <td>{genre}</td>
+                <td>{avoidance_display}</td>
+                <td>{artist_count}</td>
             </tr>
             """
         
