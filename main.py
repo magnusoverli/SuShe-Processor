@@ -762,15 +762,19 @@ class MainWindow(QMainWindow):
         """
         import math
         
+        # Define placeholder genres to be excluded from all calculations
+        PLACEHOLDER_GENRES = {"Genre 1", "Genre 2"}
+        
         # Extract user information and genres from the contributors field
         def extract_users_and_genres(row):
             if not isinstance(row['contributors'], str):
                 return [], []
             
             genres = []
-            if pd.notna(row['genre_1']):
+            # Only add valid, non-placeholder genres
+            if pd.notna(row['genre_1']) and row['genre_1'] not in PLACEHOLDER_GENRES:
                 genres.append(row['genre_1'])
-            if pd.notna(row['genre_2']):
+            if pd.notna(row['genre_2']) and row['genre_2'] not in PLACEHOLDER_GENRES:
                 genres.append(row['genre_2'])
             
             # Extract user names and ranks from contributor string (format: "User1 (rank); User2 (rank)")
@@ -840,14 +844,15 @@ class MainWindow(QMainWindow):
         genre_pivot['weighted_percentage'] = (genre_pivot['weighted_count'] / genre_pivot['weighted_total'] * 100).round(1)
         
         # 2. GENRE ABSENCE ANALYSIS
-        # Get the complete set of all genres used by at least one user
-        # This represents the "menu" of genres users are choosing from
-        all_available_genres = set(pd.concat([df['genre_1'].dropna(), df['genre_2'].dropna()]).unique())
+        # Get the complete set of all valid genres used by at least one user
+        all_genres = pd.concat([df['genre_1'].dropna(), df['genre_2'].dropna()])
+        # Filter out placeholder genres
+        all_genres = all_genres[~all_genres.isin(PLACEHOLDER_GENRES)]
+        all_available_genres = set(all_genres.unique())
         print(f"Total available genres: {len(all_available_genres)}")
         
         # Exclude extremely rare genres (optional) - those appearing in only 1 album
-        # This filters out potential one-off typos or ultra-niche classifications
-        genre_counts = pd.concat([df['genre_1'].dropna(), df['genre_2'].dropna()]).value_counts()
+        genre_counts = all_genres.value_counts()
         valid_genres = set(genre_counts[genre_counts > 1].index)  # Must appear in at least 2 albums
         
         print(f"Filtering out single-occurrence genres. Valid genres: {len(valid_genres)}")
@@ -1055,7 +1060,7 @@ class MainWindow(QMainWindow):
         
         # Add rows for each user pair
         for i, pair_data in enumerate(user_pairs):
-            user1, user2, combined, genre_sim, weighted_sim, absence_sim, artist_sim, genre, avoid, artist_count = pair_data
+            user1, user2, combined, genre_sim, weighted_sim, absence_sim, artist_sim, genre, shared_avoids, artist_count = pair_data
             
             # Format the breakdown to show individual components
             breakdown = f"""
