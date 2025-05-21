@@ -829,8 +829,8 @@ class MainWindow(QMainWindow):
                         # Identify shared favorite genres
                         shared_genres = []
                         for genre in sorted(pivot_table.columns):  # Sort genres for consistency
-                            u1_pct = pivot_table.loc[user1, genre]
-                            u2_pct = pivot_table.loc[user2, genre]
+                            u1_pct = pd.to_numeric(pivot_table.loc[user1, genre], errors='coerce')
+                            u2_pct = pd.to_numeric(pivot_table.loc[user2, genre], errors='coerce')
                             if u1_pct >= 15 and u2_pct >= 15:  # Both users have significant preference
                                 shared_genres.append((genre, min(u1_pct, u2_pct)))
                         
@@ -885,6 +885,10 @@ class MainWindow(QMainWindow):
 
     def create_country_genre_chart(self, df: pd.DataFrame) -> str:
         """Create a heatmap showing the relationship between countries and genres."""
+        # Configurable limits - easily adjustable
+        MAX_COUNTRIES = 10  # Maximum number of countries to display
+        MAX_GENRES = 15     # Maximum number of genres to display
+        
         # Combine genre columns and expand the dataframe
         g1 = df[['country', 'genre_1']].rename(columns={'genre_1': 'genre'})
         g2 = df[['country', 'genre_2']].rename(columns={'genre_2': 'genre'})
@@ -900,19 +904,39 @@ class MainWindow(QMainWindow):
             fill_value=0
         )
         
-        # If we have too many countries/genres, limit to the top ones
-        if len(pivot_data) > 10 or len(pivot_data.columns) > 10:
-            total_by_country = pivot_data.sum(axis=1).sort_values(ascending=False)
-            total_by_genre = pivot_data.sum(axis=0).sort_values(ascending=False)
-            top_countries = total_by_country.head(10).index
-            top_genres = total_by_genre.head(10).index
-            pivot_data = pivot_data.loc[pivot_data.index.isin(top_countries), pivot_data.columns.isin(top_genres)]
+        # Sort countries and genres by total counts (most significant first)
+        total_by_country = pivot_data.sum(axis=1).sort_values(ascending=False)
+        total_by_genre = pivot_data.sum(axis=0).sort_values(ascending=False)
         
+        # Apply limits if needed
+        if len(total_by_country) > MAX_COUNTRIES or len(total_by_genre) > MAX_GENRES:
+            # Get top countries and genres based on configured limits
+            top_countries = total_by_country.head(MAX_COUNTRIES).index
+            top_genres = total_by_genre.head(MAX_GENRES).index
+            
+            # Filter the pivot table to include only top countries and genres
+            pivot_data = pivot_data.loc[pivot_data.index.isin(top_countries), pivot_data.columns.isin(top_genres)]
+            
+            # Re-sort the filtered data
+            total_by_country = total_by_country[total_by_country.index.isin(top_countries)]
+            total_by_genre = total_by_genre[total_by_genre.index.isin(top_genres)]
+        
+        # Reindex data for better display (sorts countries and genres by frequency)
+        pivot_data = pivot_data.reindex(index=total_by_country.index, columns=total_by_genre.index)
+        
+        # Calculate dynamic height based on number of countries
+        height = max(450, 100 + len(pivot_data) * 40)  # Base height + extra for each country
+        
+        # Create the heatmap figure with width set to fill container
         fig = px.imshow(
             pivot_data,
             labels=dict(x="Genre", y="Country", color="Album Count"),
-            color_continuous_scale="Viridis"
+            color_continuous_scale="Viridis",
+            aspect="auto",
+            height=height
         )
+        
+        # Configure layout for better readability and to fill container
         fig.update_layout(
             title={
                 'text': 'Genre Distribution by Country',
@@ -922,13 +946,74 @@ class MainWindow(QMainWindow):
                 'yanchor': 'top',
                 'font': {'color': '#1DB954', 'size': 18}
             },
-            margin=dict(t=50, l=100, r=50, b=100),
+            margin=dict(t=50, l=120, r=50, b=100),
             paper_bgcolor='rgba(30, 30, 30, 0)',
             plot_bgcolor='rgba(30, 30, 30, 0)',
             font=dict(color="#b3b3b3"),
-            xaxis=dict(tickangle=45)
+            yaxis=dict(
+                side="left",
+                automargin=True,
+                title=dict(standoff=15),
+                fixedrange=True
+            ),
+            xaxis=dict(
+                tickangle=45,
+                automargin=True,
+                fixedrange=True
+            ),
+            autosize=False,
+            width=None,
         )
-        return fig.to_html(full_html=False, include_plotlyjs=False, config={"displayModeBar": False})
+        
+        # Improve appearance
+        fig.update_traces(
+            xgap=2,
+            ygap=2,
+            colorbar=dict(
+                thickness=20,
+                title=dict(text="Album Count", font=dict(color="#b3b3b3")),
+                tickfont=dict(color="#b3b3b3"),
+                len=0.8  # Make colorbar slightly shorter
+            )
+        )
+        
+        # Generate HTML with specific config to prevent resize issues
+        html = fig.to_html(
+            full_html=False, 
+            include_plotlyjs=False, 
+            config={
+                "displayModeBar": False,
+                "responsive": True,
+                "staticPlot": False,   # Disable interactivity to prevent resize issues
+                "doubleClick": False,  # Disable double-click actions
+            }
+        )
+        
+        # Add custom JavaScript to force proper sizing
+        extra_js = """
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                // Find this specific chart's container
+                var containers = document.querySelectorAll('.js-plotly-plot');
+                containers.forEach(function(container) {
+                    // Force the chart to use full width
+                    if (container.style.width) {
+                        container.style.width = '100%';
+                    }
+                    // Force SVG to use full width
+                    var svg = container.querySelector('svg');
+                    if (svg) {
+                        svg.setAttribute('width', '100%');
+                        svg.style.width = '100%';
+                    }
+                });
+            }, 100);
+        });
+        </script>
+        """
+        
+        return html + extra_js
 
     def create_user_genre_diversity(self, df: pd.DataFrame) -> str:
         """Create a chart showing genre diversity by user."""
@@ -1075,7 +1160,8 @@ class MainWindow(QMainWindow):
 
             webbrowser.open(f'file://{output_path}')
             self.status_label.setText("Report generated successfully!")
-            self.show_info("Success", "HTML report generated and opened.")
+            # REMOVE THIS LINE:
+            # self.show_info("Success", "HTML report generated and opened.")
             return True
         except Exception as e:
             self.status_label.setText("Error generating report!")

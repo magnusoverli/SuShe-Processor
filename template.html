@@ -398,26 +398,7 @@
         .table.dataTable.no-footer {
             border-bottom: 1px solid var(--spotify-card-border) !important;
         }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 25px 0;
-            background-color: var(--spotify-dark-gray);
-            border: 1px solid var(--spotify-card-border);
-            border-radius: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            transition: box-shadow 0.3s, transform 0.3s;
-            margin: 60px auto;
-            max-width: 800px;
-            color: var(--spotify-light-gray);
-        }
-        
-        .footer:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transform: translateY(-2px);
-        }
-        
+
         /* Responsive Adjustments */
         @media (max-width: 1200px) {
             .summary-item {
@@ -789,11 +770,6 @@
         </div>
     </div>
     
-    <!-- Footer -->
-    <div class="footer section-frame">
-        <p>© {{ current_year }} Album Report. All rights reserved.</p>
-    </div>
-    
     <!-- Force dark theme for tables with inline styles -->
     <style id="dynamicStyles">
         /* This block will be dynamically updated by JavaScript */
@@ -802,35 +778,68 @@
     <script>
         // Add dark theme styles on document load
         document.addEventListener('DOMContentLoaded', function() {
-            // Add dynamic styles programmatically (helps overcome some specificity issues)
-            const dynamicStyles = document.getElementById('dynamicStyles');
-            dynamicStyles.innerHTML = `
-                /* Force dark theme for table cells */
-                #albumsTable tbody tr td {
-                    background-color: inherit !important;
-                    color: #ffffff !important;
-                }
-                
-                /* Target odd/even rows with maximum specificity */
-                #albumsTable tbody tr.odd,
-                #albumsTable tbody tr.odd td,
-                table.dataTable tbody tr.odd,
-                .table-striped tbody tr:nth-of-type(odd) {
-                    background-color: #121212 !important;
-                }
-                
-                #albumsTable tbody tr.even,
-                #albumsTable tbody tr.even td,
-                table.dataTable tbody tr.even,
-                .table-striped tbody tr:nth-of-type(even) {
-                    background-color: #1a1a1a !important;
-                }
-                
-                /* Ensure borders are dark */
-                #albumsTable tbody td {
-                    border-color: #282828 !important;
-                }
-            `;
+            // Give the charts a moment to render
+            setTimeout(function() {
+                const plotlyCharts = document.querySelectorAll('.plotly-graph-div');
+                plotlyCharts.forEach(chart => {
+                    if (chart._fullData) {
+                        // Check if this is the genre distribution chart (heatmap)
+                        const isHeatmap = chart._fullLayout && 
+                                        chart._fullLayout.title && 
+                                        chart._fullLayout.title.text === 'Genre Distribution by Country';
+                        
+                        // Base styling for all charts
+                        const layoutUpdate = {
+                            paper_bgcolor: 'rgba(30, 30, 30, 0)',
+                            plot_bgcolor: 'rgba(30, 30, 30, 0)',
+                            font: {
+                                color: '#b3b3b3',
+                                family: 'Montserrat, Gotham, sans-serif'
+                            }
+                        };
+                        
+                        // Apply different margins based on chart type
+                        if (isHeatmap) {
+                            // Keep the heatmap's existing margins
+                            // Don't modify margins for heatmap
+                        } else {
+                            // Apply standard margins to other charts
+                            layoutUpdate.margin = {
+                                l: 50, r: 50, b: 50, t: 30, pad: 0
+                            };
+                        }
+                        
+                        // Apply the layout update
+                        Plotly.relayout(chart, layoutUpdate);
+                        
+                        // Add green accents to the chart if possible
+                        try {
+                            // For bar and scatter charts
+                            if (chart.data && chart.data[0]) {
+                                if (chart.data[0].marker) {
+                                    chart.data.forEach(trace => {
+                                        if (trace.marker && !trace.marker.colorscale) {
+                                            // Change color to Spotify green if not using colorscale
+                                            Plotly.restyle(chart, {'marker.color': '#1DB954'}, [chart.data.indexOf(trace)]);
+                                        }
+                                    });
+                                }
+                                
+                                // For line charts
+                                if (chart.data[0].line) {
+                                    chart.data.forEach(trace => {
+                                        if (trace.line && !trace.line.colorscale) {
+                                            Plotly.restyle(chart, {'line.color': '#1DB954'}, [chart.data.indexOf(trace)]);
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Could not update chart colors');
+                        }
+                    }
+                });
+            }, 1000);
         });
     </script>
     <!-- Initialize DataTables -->
