@@ -26,8 +26,8 @@ def resource_path(relative_path: str) -> str:
     """Get absolute path to resource, works for dev and for PyInstaller."""
     try:
         # PyInstaller creates a temporary folder and stores its path in _MEIPASS
-        base_path = sys._MEIPASS
-    except AttributeError:
+        base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+    except Exception:
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
@@ -492,8 +492,10 @@ class MainWindow(QMainWindow):
 
         # Convert columns
         df['release_date'] = pd.to_datetime(df['release_date'], format='%d-%m-%Y', errors='coerce')
-        df['rank'] = pd.to_numeric(df['rank'], errors='coerce').astype(pd.Int64Dtype())
-        df['points'] = pd.to_numeric(df['points'], errors='coerce').astype(pd.Int64Dtype())
+        df['rank'] = pd.to_numeric(df['rank'], errors='coerce')
+        df['rank'] = df['rank'].astype(pd.Int64Dtype())
+        df['points'] = pd.to_numeric(df['points'], errors='coerce')
+        df['points'] = df['points'].astype(pd.Int64Dtype())
 
         # Resize images
         if 'cover_image' in df.columns:
@@ -644,7 +646,7 @@ class MainWindow(QMainWindow):
     def create_release_timeline(self, df: pd.DataFrame) -> str:
         """Create a timeline of album releases throughout the year."""
         monthly_counts = df.groupby('month').size().reset_index(name='count')
-        monthly_counts['month_name'] = pd.to_datetime(monthly_counts['month'], format='%m').dt.strftime('%B')
+        monthly_counts['month_name'] = monthly_counts['month'].apply(lambda m: pd.Timestamp(f"2023-{m}-01").strftime('%B'))
         monthly_counts = monthly_counts.sort_values('month')
         
         fig = px.bar(
@@ -692,7 +694,7 @@ class MainWindow(QMainWindow):
             return "<div class='text-center text-light p-5'>No albums selected by multiple users</div>"
         
         # Sort by user count and get top 10
-        consensus_albums = consensus_albums.sort_values('user_count', ascending=False).head(10)
+        consensus_albums = consensus_albums.sort_values(by=['user_count'], ascending=[False]).head(10)
         
         # Create display name
         consensus_albums['album_artist'] = consensus_albums['artist'] + ' - ' + consensus_albums['album']
